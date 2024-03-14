@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\UNIMI\TESI\Phoenix\build\CMakeFiles\0505d18af9feb1377fa86dc4be57d6dd\Experimental.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\UNIMI\TESI\Phoenix\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\UNIMI\TESI\Phoenix\build\CMakeFiles\Experimental" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{FD98EA87-BA4E-3EDB-B68C-0C192597D25B}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

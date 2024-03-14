@@ -1,0 +1,5 @@
+set(TINY_OBJ_PATH C:/UNIMI/TESI/Phoenix/Dependencies)
+set(STB_PATH C:/UNIMI/TESI/Phoenix/Dependencies/)
+set(GLM_PATH C:/UNIMI/TESI/Phoenix/Dependencies/glm)
+set(GLFW_PATH C:/UNIMI/TESI/Phoenix/Dependencies/GLFW/glfw-3.3.8.bin.WIN64)
+set(VULKAN_PATH C:/UNIMI/TESI/Phoenix/Dependencies/Vulkan/1.3.268.0)

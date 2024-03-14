@@ -1,0 +1,4 @@
+C:/UNIMI/TESI/Phoenix/build/CMakeFiles/Phoenix.dir
+C:/UNIMI/TESI/Phoenix/build/CMakeFiles/PACKAGE.dir
+C:/UNIMI/TESI/Phoenix/build/CMakeFiles/ALL_BUILD.dir
+C:/UNIMI/TESI/Phoenix/build/CMakeFiles/ZERO_CHECK.dir
