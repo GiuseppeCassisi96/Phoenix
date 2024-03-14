@@ -313,7 +313,15 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\PhoenixApp.cpp" />
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.h" />
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.h" />
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.h" />
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="C:\UNIMI\TESI\Phoenix\build\ZERO_CHECK.vcxproj">

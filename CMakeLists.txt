@@ -1,15 +1,11 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5.0)
 project(Phoenix VERSION 0.1.0 LANGUAGES C CXX)
 
-#include(CTest)
-#enable_testing()
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE MINERVA_SOURCES ${PROJECT_SOURCE_DIR}/src/Minerva/*.cpp)
+file(GLOB_RECURSE MINERVA_HEADERS ${PROJECT_SOURCE_DIR}/src/Minerva/*.h)
+add_executable(Phoenix ${SOURCES} ${MINERVA_SOURCES} ${MINERVA_HEADERS})
 
-
-add_executable(Phoenix src/PhoenixApp.cpp)
-
-#set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-#set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-#include(CPack)
 include(envPhoenix.cmake)
 
 #Here I set the compiler. I will use g++ compiler for .cpp files 
