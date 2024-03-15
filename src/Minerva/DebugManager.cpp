@@ -31,7 +31,7 @@ namespace Minerva
             bool layerFound = false;
             for (const auto& availableLayer : availableLayers)
             {
-                if(strcmp(availableLayer.layerName, validationLayer) == 0)
+                if(strcmp(validationLayer, availableLayer.layerName) == 0)
                 {
                     layerFound = true;
                     break;
@@ -95,7 +95,11 @@ namespace Minerva
         VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData)
     {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        // Message is important enough to show
+        if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) 
+        {
+            std::cerr << " validation layer: " << pCallbackData->pMessage << std::endl;
+        }
         return VK_FALSE;
     }
 }

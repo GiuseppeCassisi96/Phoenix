@@ -11,6 +11,7 @@ namespace Minerva
         ~VulkanInstance();
         VkInstance instance = nullptr;
         DebugManager debugLayer;
+        /// @brief Creates the instance of Vulkan using hardcoded informations 
         void CreateInstance();
     };
 }

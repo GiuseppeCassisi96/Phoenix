@@ -16,11 +16,11 @@ namespace Minerva
 
         VkApplicationInfo VKappInfo {};
         VKappInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        VKappInfo.pApplicationName = "VulkanLearning";
+        VKappInfo.pApplicationName = "Minerva";
         VKappInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        VKappInfo.pEngineName = "No Engine";
+        VKappInfo.pEngineName = "Minerva";
         VKappInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        VKappInfo.apiVersion = VK_API_VERSION_1_0;
+        VKappInfo.apiVersion = VK_API_VERSION_1_3;
 
 
         VkInstanceCreateInfo VKinstanceInfo {};
@@ -45,7 +45,6 @@ namespace Minerva
         VKinstanceInfo.enabledExtensionCount = static_cast<uint32_t>(recExtensions.size());
         VKinstanceInfo.ppEnabledExtensionNames = recExtensions.data();
         
-        VKinstanceInfo.enabledLayerCount = 0;
 
         VkResult result = vkCreateInstance(&VKinstanceInfo, nullptr, &instance);
         if (result != VK_SUCCESS)

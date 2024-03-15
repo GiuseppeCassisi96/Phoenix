@@ -14,7 +14,7 @@ namespace Minerva
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
         /*All that's left now is creating the actual window. Add a GLFWwindow*
         *window; private class member to store a reference to it and initialize the window with:*/
-        window = glfwCreateWindow(width, width, "vulkan", nullptr, nullptr);
+        window = glfwCreateWindow(width, width, "Minerva", nullptr, nullptr);
     }
 
     Window::~Window()
