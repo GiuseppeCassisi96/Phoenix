@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(Phoenix VERSION 0.1.0 LANGUAGES C CXX)
+set (CMAKE_CXX_STANDARD 20)
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE MINERVA_SOURCES ${PROJECT_SOURCE_DIR}/src/Minerva/*.cpp)

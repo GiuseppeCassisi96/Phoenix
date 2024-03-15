@@ -8,7 +8,7 @@ namespace Minerva
     {
         
     public:
-        const int WIDTH = 1920, HEIGHT = 1080;
+        const int WIDTH = 600, HEIGHT = 600;
         GLFWwindow* window;
         Window() = default;
         ~Window();

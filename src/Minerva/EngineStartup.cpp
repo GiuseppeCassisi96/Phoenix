@@ -14,6 +14,9 @@ namespace Minerva
         windowInstance.EngineInitWindow(windowInstance.WIDTH, windowInstance.HEIGHT);
         engineInstance.CreateInstance();
         debugLayer.SetupDebugMessenger(engineInstance.instance);
+        engineDevice.PickMostSuitableDevice(engineInstance.instance);
+        engineDevice.PrintInfoDeviceSelected();
+        engineDevice.CreateLogicalDevice(debugLayer);
     }
     void EngineStartup::Loop()
     {

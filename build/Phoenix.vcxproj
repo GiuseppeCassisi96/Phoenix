@@ -92,6 +92,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -133,6 +134,7 @@
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <Optimization>MaxSpeed</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -176,6 +178,7 @@
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <Optimization>MinSpace</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -220,6 +223,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <Optimization>MaxSpeed</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -314,11 +318,13 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\PhoenixApp.cpp" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.h" />
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.h" />
