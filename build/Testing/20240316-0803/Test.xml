@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Site BuildName="Win32-MSBuild"
-	BuildStamp="20240315-0806-Experimental"
+	BuildStamp="20240316-0803-Experimental"
 	Name="Peppe"
 	Generator="ctest-3.28.1"
 	CompilerName="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe"
@@ -18,17 +18,17 @@
 	ProcessorCacheSize="-1"
 	NumberOfLogicalCPU="20"
 	NumberOfPhysicalCPU="14"
-	TotalVirtualMemory="22735"
+	TotalVirtualMemory="21427"
 	TotalPhysicalMemory="16051"
 	LogicalProcessorsPerPhysical="1"
 	ProcessorClockFrequency="2688"
 	>
 	<Testing>
-		<StartDateTime>Mar 15 17:22 ora solare Europa occidentale</StartDateTime>
-		<StartTestTime>1710519745</StartTestTime>
+		<StartDateTime>Mar 16 09:03 ora solare Europa occidentale</StartDateTime>
+		<StartTestTime>1710576209</StartTestTime>
 		<TestList/>
-		<EndDateTime>Mar 15 17:22 ora solare Europa occidentale</EndDateTime>
-		<EndTestTime>1710519745</EndTestTime>
+		<EndDateTime>Mar 16 09:03 ora solare Europa occidentale</EndDateTime>
+		<EndTestTime>1710576209</EndTestTime>
 		<ElapsedMinutes>0</ElapsedMinutes>
 	</Testing>
 </Site>

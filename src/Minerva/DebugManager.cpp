@@ -98,7 +98,7 @@ namespace Minerva
         // Message is important enough to show
         if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) 
         {
-            std::cerr << " validation layer: " << pCallbackData->pMessage << std::endl;
+            std::cerr << "\n validation layer: " << pCallbackData->pMessage << std::endl;
         }
         return VK_FALSE;
     }
