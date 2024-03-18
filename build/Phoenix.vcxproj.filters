@@ -30,6 +30,9 @@
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineVars.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.h">
       <Filter>Header Files</Filter>
     </ClInclude>

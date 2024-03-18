@@ -1,7 +1,13 @@
 #include "EngineStartup.h"
+#include "EngineVars.h"
 
 namespace Minerva
 {
+    VulkanInstance engineInstance;
+    Window windowInstance;
+    DebugManager debugLayer;
+    Device engineDevice;
+
     void EngineStartup::RunEngine()
     {
         Start();
@@ -18,11 +24,13 @@ namespace Minerva
         engineDevice.PickMostSuitableDevice(engineInstance.instance, windowInstance.windowSurface);
         engineDevice.PrintInfoDeviceSelected();
         engineDevice.CreateLogicalDevice(debugLayer, windowInstance.windowSurface);
+        engineDevice.CreateSwapChain();
+        engineDevice.CreateImageViews();
     }
     void EngineStartup::Loop()
     {
         while (!glfwWindowShouldClose(windowInstance.window)) {
-        glfwPollEvents();
-    }
+            glfwPollEvents();
+        }
     }
 }

@@ -4,6 +4,8 @@
 #include "GLFW/glfw3.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#include "vector"
+
 
 namespace Minerva
 {
@@ -21,8 +23,7 @@ namespace Minerva
         /// @param height Is the height of window
         void EngineInitWindow(int width, int height);
         void CreateWindowSurface(const VkInstance& instance);
-    private:
-        VkInstance instanceHandle = VK_NULL_HANDLE;
+
     };
 }
 

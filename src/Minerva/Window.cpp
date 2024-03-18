@@ -1,10 +1,9 @@
 #include "Window.h"
 #include <stdexcept>
 #include <iostream>
+#include "EngineVars.h"
 namespace Minerva
 {
-    
-
     void Window::EngineInitWindow(int width, int height)
     {
         glfwInit();
@@ -21,7 +20,6 @@ namespace Minerva
 
     void Window::CreateWindowSurface(const VkInstance &instance)
     {
-        instanceHandle = instance;
         if (glfwCreateWindowSurface(instance, window, nullptr, &windowSurface) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create window surface!");
@@ -31,7 +29,6 @@ namespace Minerva
     Window::~Window()
     {
         std::cout << "Destruction Window... \n";
-        vkDestroySurfaceKHR(instanceHandle, windowSurface, nullptr);
         glfwDestroyWindow(window);
         glfwTerminate();
     }

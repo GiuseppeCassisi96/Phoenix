@@ -1,6 +1,8 @@
 #include "DebugManager.h"
 #include <stdexcept>
 #include <iostream>
+#include <cstring>
+#include "EngineVars.h"
 
 namespace Minerva
 {

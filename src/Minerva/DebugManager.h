@@ -48,6 +48,7 @@ namespace Minerva
             const VkAllocationCallbacks* pAllocator
         );
     private:
+        
 
         /// @brief Is the callback function which is going to print the message
         /// @param messageSeverity The severity of a message. It could be an error, a warning

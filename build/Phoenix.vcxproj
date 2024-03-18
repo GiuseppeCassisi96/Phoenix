@@ -326,6 +326,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.h" />
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineVars.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.h" />
   </ItemGroup>
