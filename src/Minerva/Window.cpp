@@ -1,7 +1,6 @@
 #include "Window.h"
 #include <stdexcept>
 #include <iostream>
-#include "EngineVars.h"
 namespace Minerva
 {
     void Window::EngineInitWindow(int width, int height)

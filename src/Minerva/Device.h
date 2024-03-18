@@ -33,6 +33,8 @@ namespace Minerva
     public:
         VkSwapchainKHR swapChain = VK_NULL_HANDLE;
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        VkExtent2D swapChainExtent;
+        VkFormat swapChainImageFormat;
         //The handle of logical device
         VkDevice logicalDevice = VK_NULL_HANDLE;
         /// @brief Pick the best physical device 
@@ -67,8 +69,6 @@ namespace Minerva
         std::vector<VkImageView> swapChainImageViews;
         VkQueue graphicsQueue = VK_NULL_HANDLE;
         VkQueue presentationQueue = VK_NULL_HANDLE;
-        VkFormat swapChainImageFormat;
-        VkExtent2D swapChainExtent;
         /// @brief Rates the current device based on some device properties and features
         /// @param currentDevice The physical device that I want to rate
         /// @return The rate 

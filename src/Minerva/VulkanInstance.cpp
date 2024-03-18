@@ -54,7 +54,7 @@ namespace Minerva
     }
      VulkanInstance::~VulkanInstance()
     {
-        std::cout << "Destruction VulkanInstance... \n";
+        std::cout << "Destruction Vulkan instance... \n";
         vkDestroyInstance(instance, nullptr);
     }
 }

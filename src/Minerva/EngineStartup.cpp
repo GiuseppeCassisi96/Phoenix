@@ -1,5 +1,6 @@
 #include "EngineStartup.h"
 #include "EngineVars.h"
+#include <iostream>
 
 namespace Minerva
 {
@@ -7,9 +8,12 @@ namespace Minerva
     Window windowInstance;
     DebugManager debugLayer;
     Device engineDevice;
+    EnginePipeline enginePipeline;
+    Renderer engineRenderer;
 
     void EngineStartup::RunEngine()
     {
+        std::cout << "                                          -----------------MINERVA ENGINE-----------------\n\n";
         Start();
         Loop();
         debugLayer.DestroyDebugUtilsMessengerEXT(engineInstance.instance,debugLayer.debugMessenger,nullptr);
@@ -26,6 +30,8 @@ namespace Minerva
         engineDevice.CreateLogicalDevice(debugLayer, windowInstance.windowSurface);
         engineDevice.CreateSwapChain();
         engineDevice.CreateImageViews();
+        engineRenderer.CreateRenderPass();
+        enginePipeline.CreatePipeline("vert", "frag");
     }
     void EngineStartup::Loop()
     {
