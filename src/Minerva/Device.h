@@ -35,8 +35,11 @@ namespace Minerva
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         VkExtent2D swapChainExtent;
         VkFormat swapChainImageFormat;
+        VkQueue graphicsQueue = VK_NULL_HANDLE;
+        VkQueue presentationQueue = VK_NULL_HANDLE;
         //The handle of logical device
         VkDevice logicalDevice = VK_NULL_HANDLE;
+        std::vector<VkImageView> swapChainImageViews;
         /// @brief Pick the best physical device 
         /// @param vulkanInstance The Vulkan instance
         void PickMostSuitableDevice(const VkInstance& vulkanInstance, const VkSurfaceKHR& windowSurface);
@@ -61,14 +64,13 @@ namespace Minerva
         /// @brief Creates the swap chain based on surface format, surface presentation mode and surface extent
         void CreateSwapChain();
         void CreateImageViews();
+        void RecreateSwapChain();
+        void CleanupSwapChain();
         Device() = default;
         ~Device();
     private: 
         const std::vector<const char*> neededDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
         std::vector<VkImage> swapChainImages;
-        std::vector<VkImageView> swapChainImageViews;
-        VkQueue graphicsQueue = VK_NULL_HANDLE;
-        VkQueue presentationQueue = VK_NULL_HANDLE;
         /// @brief Rates the current device based on some device properties and features
         /// @param currentDevice The physical device that I want to rate
         /// @return The rate 

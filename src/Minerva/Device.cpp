@@ -225,15 +225,46 @@ namespace Minerva
     Device::~Device()
     {
         std::cout << "Destruction Device... \n";
-        for (auto imageView : swapChainImageViews) {
+         for (auto imageView : swapChainImageViews) {
             vkDestroyImageView(logicalDevice, imageView, nullptr);
         }
+
         vkDestroySwapchainKHR(logicalDevice, swapChain, nullptr);
         vkDestroySurfaceKHR(engineInstance.instance, windowInstance.windowSurface, nullptr);
         vkDestroyDevice(logicalDevice, nullptr);
         
     }
 
+    void Device::CleanupSwapChain()
+    {
+        for (auto framebuffer : engineRenderer.swapChainFramebuffers) {
+            vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
+        }
+
+        for (auto imageView : swapChainImageViews) {
+            vkDestroyImageView(logicalDevice, imageView, nullptr);
+        }
+
+        vkDestroySwapchainKHR(logicalDevice, swapChain, nullptr);
+    }
+
+    void Device::RecreateSwapChain()
+    {
+        int width = 0, height = 0;
+        glfwGetFramebufferSize(windowInstance.window, &width, &height);
+        while (width == 0 || height == 0) {
+            glfwGetFramebufferSize(windowInstance.window, &width, &height);
+            glfwWaitEvents();
+        }
+
+        vkDeviceWaitIdle(logicalDevice);
+
+        CleanupSwapChain();
+
+        CreateSwapChain();
+        CreateImageViews();
+        engineRenderer.CreateFramebuffers();
+    }
 
     VkSurfaceFormatKHR Device::ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats,
     const VkFormat& desiredFormat, const VkColorSpaceKHR& desiredColorSpace)

@@ -1,6 +1,7 @@
 #include "Window.h"
 #include <stdexcept>
 #include <iostream>
+#include "Renderer.h"
 namespace Minerva
 {
     void Window::EngineInitWindow(int width, int height)
@@ -15,6 +16,8 @@ namespace Minerva
         /*All that's left now is creating the actual window. Add a GLFWwindow*
         *window; private class member to store a reference to it and initialize the window with:*/
         window = glfwCreateWindow(width, width, "Minerva", nullptr, nullptr);
+        glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, FramebufferResizeCallback);
     }
 
     void Window::CreateWindowSurface(const VkInstance &instance)
@@ -23,6 +26,12 @@ namespace Minerva
         {
             throw std::runtime_error("failed to create window surface!");
         }
+    }
+
+    void Window::FramebufferResizeCallback(GLFWwindow *window, int width, int height)
+    {
+        auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
+        app->framebufferResized = true;
     }
 
     Window::~Window()

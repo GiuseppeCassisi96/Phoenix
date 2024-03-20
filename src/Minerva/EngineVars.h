@@ -5,6 +5,7 @@
 #include "Device.h"
 #include "EnginePipeline.h"
 #include "Renderer.h"
+#include "Mesh.h"
 namespace Minerva
 {
     extern VulkanInstance engineInstance;
@@ -13,4 +14,5 @@ namespace Minerva
     extern Device engineDevice;
     extern EnginePipeline enginePipeline;
     extern Renderer engineRenderer;
+    extern Mesh engineMesh;
 }

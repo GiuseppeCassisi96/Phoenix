@@ -23,6 +23,7 @@ namespace Minerva
         /// @param height Is the height of window
         void EngineInitWindow(int width, int height);
         void CreateWindowSurface(const VkInstance& instance);
+        static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
     };
 }

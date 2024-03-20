@@ -42,6 +42,9 @@
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineVars.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>

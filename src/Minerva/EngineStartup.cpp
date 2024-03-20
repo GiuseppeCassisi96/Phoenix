@@ -10,6 +10,7 @@ namespace Minerva
     Device engineDevice;
     EnginePipeline enginePipeline;
     Renderer engineRenderer;
+    Mesh engineMesh;
 
     void EngineStartup::RunEngine()
     {
@@ -32,11 +33,19 @@ namespace Minerva
         engineDevice.CreateImageViews();
         engineRenderer.CreateRenderPass();
         enginePipeline.CreatePipeline("vert", "frag");
+        engineRenderer.CreateFramebuffers();
+        engineRenderer.CreateCommandPool();
+        engineRenderer.CreateVertexBuffer();
+        engineRenderer.CreateIndexBuffer();
+        engineRenderer.CreateCommandBuffer();
+        engineRenderer.CreateSyncObjects();
     }
     void EngineStartup::Loop()
     {
         while (!glfwWindowShouldClose(windowInstance.window)) {
             glfwPollEvents();
+            engineRenderer.DrawFrame();
         }
+        vkDeviceWaitIdle(engineDevice.logicalDevice);
     }
 }
