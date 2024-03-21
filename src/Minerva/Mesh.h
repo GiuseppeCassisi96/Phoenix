@@ -1,3 +1,4 @@
+#pragma once
 #include <glm/glm.hpp>
 #include <array>
 #include "vector"
@@ -37,6 +38,13 @@ namespace Minerva
             return attributeDescriptions;
         }
     };
+
+    struct UniformBufferObject {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+    };
+
     class Mesh
     {
     public:

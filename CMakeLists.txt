@@ -122,4 +122,6 @@ if(WIN32)
     )
 
     target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1)
+
+    #execute_process(COMMAND cmd /c C:/UNIMI/TESI/Phoenix/src/Minerva/Shaders/ShaderCompiler.bat)
 endif()

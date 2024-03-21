@@ -10,6 +10,7 @@ namespace Minerva
         
     public:
         VkPipeline graphicsPipeline;
+        VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
         /// @brief Creates the graphics pipeline
         /// @param vertShaderName The name of vertex shader
         /// @param fragShaderName The name of fragment shader
@@ -18,7 +19,7 @@ namespace Minerva
     private:     
         const std::string SHADERS_PATH = "C:/UNIMI/TESI/Phoenix/src/Minerva/Shaders/";
         const std::string FILE_TYPE = ".spv";
-        VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+        
 
         /// @brief Reads the compiled shader file 
         /// @param filename The path of the file 

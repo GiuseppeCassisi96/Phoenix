@@ -32,11 +32,15 @@ namespace Minerva
         engineDevice.CreateSwapChain();
         engineDevice.CreateImageViews();
         engineRenderer.CreateRenderPass();
+        engineRenderer.CreateDescriptorSetLayout();
         enginePipeline.CreatePipeline("vert", "frag");
         engineRenderer.CreateFramebuffers();
         engineRenderer.CreateCommandPool();
         engineRenderer.CreateVertexBuffer();
         engineRenderer.CreateIndexBuffer();
+        engineRenderer.CreateUniformBuffers();
+        engineRenderer.CreateDescriptorPool();
+        engineRenderer.CreateDescriptorSets();
         engineRenderer.CreateCommandBuffer();
         engineRenderer.CreateSyncObjects();
     }
