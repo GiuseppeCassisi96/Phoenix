@@ -25,6 +25,7 @@ namespace Minerva
         void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
         VkBuffer& buffer, VkDeviceMemory& bufferMemory);
         void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+        void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
         void CreateVertexBuffer();
         void CreateIndexBuffer();
         void CreateDescriptorSetLayout();
@@ -32,6 +33,15 @@ namespace Minerva
         void CreateDescriptorSets();
         void CreateUniformBuffers();
         void UpdateUniformBuffer(uint32_t currentImage);
+        VkCommandBuffer BeginSingleTimeCommands();
+        void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+        void TransitionImageLayout(VkImage image, VkFormat format, 
+        VkImageLayout oldLayout, VkImageLayout newLayout);
+        void CreateDepthResources();
+        VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, 
+        VkImageTiling tiling, VkFormatFeatureFlags features);
+        VkFormat FindDepthFormat();
+        bool HasStencilComponent(VkFormat format);
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         Renderer() = default;
         ~Renderer();
@@ -43,6 +53,9 @@ namespace Minerva
         std::vector<VkBuffer> uniformBuffers;
         std::vector<VkDeviceMemory> uniformBuffersMemory;
         std::vector<void*> uniformBuffersMapped;
+        VkImage depthImage;
+        VkDeviceMemory depthImageMemory;
+        VkImageView depthImageView;
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet> descriptorSets;
         const int MAX_FRAMES_IN_FLIGHT = 2;

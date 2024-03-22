@@ -66,6 +66,7 @@ namespace Minerva
         void CreateImageViews();
         void RecreateSwapChain();
         void CleanupSwapChain();
+        VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
         Device() = default;
         ~Device();
     private: 

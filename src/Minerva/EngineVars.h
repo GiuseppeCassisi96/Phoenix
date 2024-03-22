@@ -6,6 +6,7 @@
 #include "EnginePipeline.h"
 #include "Renderer.h"
 #include "Mesh.h"
+#include "TextureManager.h"
 namespace Minerva
 {
     extern VulkanInstance engineInstance;
@@ -15,4 +16,5 @@ namespace Minerva
     extern EnginePipeline enginePipeline;
     extern Renderer engineRenderer;
     extern Mesh engineMesh;
+    extern TextureManager texture;
 }

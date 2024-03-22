@@ -11,6 +11,7 @@ namespace Minerva
     EnginePipeline enginePipeline;
     Renderer engineRenderer;
     Mesh engineMesh;
+    TextureManager texture;
 
     void EngineStartup::RunEngine()
     {
@@ -34,8 +35,13 @@ namespace Minerva
         engineRenderer.CreateRenderPass();
         engineRenderer.CreateDescriptorSetLayout();
         enginePipeline.CreatePipeline("vert", "frag");
-        engineRenderer.CreateFramebuffers();
         engineRenderer.CreateCommandPool();
+        engineRenderer.CreateDepthResources();
+        engineRenderer.CreateFramebuffers();
+        texture.CreateTextureImage("SteamHammerColor.png");
+        texture.CreateTextureImageView();
+        texture.CreateTextureSampler();
+        engineMesh.LoadModel("SteamHammer.obj");
         engineRenderer.CreateVertexBuffer();
         engineRenderer.CreateIndexBuffer();
         engineRenderer.CreateUniformBuffers();

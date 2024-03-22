@@ -13,7 +13,13 @@
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\TextureManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.cpp">
@@ -46,6 +52,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\TextureManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.h">

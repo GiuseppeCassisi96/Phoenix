@@ -321,7 +321,9 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EnginePipeline.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\TextureManager.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\PhoenixApp.cpp" />
@@ -332,6 +334,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineVars.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.h" />
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\TextureManager.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.h" />
   </ItemGroup>
