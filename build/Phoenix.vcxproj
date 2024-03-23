@@ -319,6 +319,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineCamera.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EnginePipeline.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.cpp" />
@@ -329,6 +330,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\PhoenixApp.cpp" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.h" />
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineCamera.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EnginePipeline.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.h" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineVars.h" />

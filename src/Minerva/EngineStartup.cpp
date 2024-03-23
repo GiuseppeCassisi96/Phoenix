@@ -11,7 +11,9 @@ namespace Minerva
     EnginePipeline enginePipeline;
     Renderer engineRenderer;
     Mesh engineMesh;
+    Transformation engineTransform;
     TextureManager texture;
+    EngineCamera camera;
 
     void EngineStartup::RunEngine()
     {
@@ -49,11 +51,19 @@ namespace Minerva
         engineRenderer.CreateDescriptorSets();
         engineRenderer.CreateCommandBuffer();
         engineRenderer.CreateSyncObjects();
+
+        camera.SetupViewMatrix(engineTransform.ubo.view);
+        glfwSetCursorPosCallback(windowInstance.window, [](GLFWwindow* window, double xpos, double ypos)
+        {
+            camera.MouseCallback(window, xpos, ypos);
+        });
+        glfwSetInputMode(windowInstance.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
     }
     void EngineStartup::Loop()
     {
         while (!glfwWindowShouldClose(windowInstance.window)) {
             glfwPollEvents();
+            camera.ProcessUserInput(windowInstance.window);
             engineRenderer.DrawFrame();
         }
         vkDeviceWaitIdle(engineDevice.logicalDevice);

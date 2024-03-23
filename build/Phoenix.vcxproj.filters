@@ -7,6 +7,9 @@
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EnginePipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -37,6 +40,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EnginePipeline.h">
