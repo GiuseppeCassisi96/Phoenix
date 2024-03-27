@@ -16,6 +16,7 @@ namespace Minerva
         const int WIDTH = 1920, HEIGHT = 1080;
         VkSurfaceKHR windowSurface = VK_NULL_HANDLE;  
         GLFWwindow* window = nullptr;
+        bool isCursorDisabled = true;
         Window() = default;
         ~Window();
         /// @brief Create and initialize the window according to some params
@@ -24,6 +25,7 @@ namespace Minerva
         void EngineInitWindow(int width, int height);
         void CreateWindowSurface(const VkInstance& instance);
         static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+        void KeyPressCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     };
 }

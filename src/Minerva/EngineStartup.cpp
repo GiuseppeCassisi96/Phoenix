@@ -1,6 +1,10 @@
 #include "EngineStartup.h"
 #include "EngineVars.h"
 #include <iostream>
+#include "imgui.h"
+#include "imconfig.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
 
 namespace Minerva
 {
@@ -14,6 +18,7 @@ namespace Minerva
     Transformation engineTransform;
     TextureManager texture;
     EngineCamera camera;
+    MinervaUI engineUI;
 
     void EngineStartup::RunEngine()
     {
@@ -52,19 +57,29 @@ namespace Minerva
         engineRenderer.CreateCommandBuffer();
         engineRenderer.CreateSyncObjects();
 
+        
+        glfwSetInputMode(windowInstance.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         camera.SetupViewMatrix(engineTransform.ubo.view);
         glfwSetCursorPosCallback(windowInstance.window, [](GLFWwindow* window, double xpos, double ypos)
         {
-            camera.MouseCallback(window, xpos, ypos);
+            if(windowInstance.isCursorDisabled)
+                camera.MouseCallback(window, xpos, ypos);
         });
-        glfwSetInputMode(windowInstance.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+        engineUI.SetupUI();
+        glfwSetKeyCallback(windowInstance.window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+        {
+            windowInstance.KeyPressCallback(window, key, scancode, action, mods);
+        });
+          
     }
     void EngineStartup::Loop()
     {
         while (!glfwWindowShouldClose(windowInstance.window)) {
+            
             glfwPollEvents();
             camera.ProcessUserInput(windowInstance.window);
             engineRenderer.DrawFrame();
+            
         }
         vkDeviceWaitIdle(engineDevice.logicalDevice);
     }

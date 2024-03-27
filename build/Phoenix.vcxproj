@@ -86,7 +86,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -104,10 +104,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -130,7 +130,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -148,10 +148,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -174,7 +174,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -192,10 +192,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -218,7 +218,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -235,10 +235,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking;C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends;C:\UNIMI\TESI\Phoenix\src;C:\UNIMI\TESI\Phoenix\Dependencies\Vulkan\1.3.268.0\Include;C:\UNIMI\TESI\Phoenix\Dependencies\GLFW\glfw-3.3.8.bin.WIN64\include;C:\UNIMI\TESI\Phoenix\Dependencies\glm;C:\UNIMI\TESI\Phoenix\Dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -323,22 +323,19 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EnginePipeline.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\MinervaUI.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\TextureManager.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\PhoenixApp.cpp" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineCamera.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EnginePipeline.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineVars.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\TextureManager.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.h" />
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.h" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui_draw.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui_demo.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui_tables.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="C:\UNIMI\TESI\Phoenix\build\ZERO_CHECK.vcxproj">

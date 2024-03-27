@@ -6,6 +6,7 @@ namespace Minerva
     class Renderer
     {
     public:
+        uint32_t currentFrame = 0;
         VkRenderPass renderPass;
         std::vector<VkFramebuffer> swapChainFramebuffers;
         VkCommandPool commandPool;
@@ -15,6 +16,8 @@ namespace Minerva
         std::vector<VkFence> inFlightFences;
         VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
         bool framebufferResized = false;
+        VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+        const int MAX_FRAMES_IN_FLIGHT = 2;
         void CreateRenderPass();
         void CreateFramebuffers();
         void CreateCommandPool();
@@ -56,10 +59,8 @@ namespace Minerva
         VkImage depthImage;
         VkDeviceMemory depthImageMemory;
         VkImageView depthImageView;
-        VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet> descriptorSets;
-        const int MAX_FRAMES_IN_FLIGHT = 2;
-        uint32_t currentFrame = 0;
+        
         
     };
     

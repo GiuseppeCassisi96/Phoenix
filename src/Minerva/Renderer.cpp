@@ -123,6 +123,7 @@ namespace Minerva
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
+        
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass = renderPass;
@@ -136,8 +137,7 @@ namespace Minerva
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
-        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
+        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);         
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, enginePipeline.graphicsPipeline);
 
             VkViewport viewport{};
@@ -158,9 +158,12 @@ namespace Minerva
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
+            enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            
+            
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(engineMesh.indices.size()), 1, 0, 0, 0);
+            engineUI.RenderUI(commandBuffers[currentFrame]);
 
         vkCmdEndRenderPass(commandBuffer);
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -169,9 +172,9 @@ namespace Minerva
     }
     void Renderer::DrawFrame()
     {
-        vkWaitForFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-        
-
+        vkWaitForFences(engineDevice.logicalDevice, 1, 
+        &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    
         uint32_t imageIndex;
         VkResult result = vkAcquireNextImageKHR(engineDevice.logicalDevice, engineDevice.swapChain,
          UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -183,11 +186,8 @@ namespace Minerva
             throw std::runtime_error("failed to acquire swap chain image!");
         }
         UpdateUniformBuffer(currentFrame);
-
-        vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
-        vkResetCommandBuffer(commandBuffers[currentFrame],  0);
         RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
-
+        vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -198,7 +198,6 @@ namespace Minerva
         submitInfo.pWaitDstStageMask = waitStages;
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
-
         VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
@@ -332,13 +331,14 @@ namespace Minerva
         poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
         poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+        poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * 2;
 
         VkDescriptorPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
         poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
         poolInfo.pPoolSizes = poolSizes.data();
-        poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+        poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * 2;
 
         if (vkCreateDescriptorPool(engineDevice.logicalDevice, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor pool!");
@@ -648,7 +648,7 @@ namespace Minerva
     Renderer::~Renderer()
     {
         std::cout << "Destruction Renderer... \n";
-         vkDestroyImageView(engineDevice.logicalDevice, depthImageView, nullptr);
+        vkDestroyImageView(engineDevice.logicalDevice, depthImageView, nullptr);
         vkDestroyImage(engineDevice.logicalDevice, depthImage, nullptr);
         vkFreeMemory(engineDevice.logicalDevice, depthImageMemory, nullptr);
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {

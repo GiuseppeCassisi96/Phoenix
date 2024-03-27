@@ -4,6 +4,10 @@
 #include <iostream>
 
 
+
+
+//!TO-DO: Implement a pipeline cache to increase performance
+
 namespace Minerva
 {
     void EnginePipeline::CreatePipeline(const std::string& vertShaderName, const std::string& fragShaderName)

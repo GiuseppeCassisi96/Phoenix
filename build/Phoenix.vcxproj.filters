@@ -19,6 +19,9 @@
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\MinervaUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -34,49 +37,32 @@
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\PhoenixApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EnginePipeline.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineVars.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\TextureManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends\imgui_impl_glfw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\backends\imgui_impl_vulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui_draw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui_demo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui_tables.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\ImGui\imgui-docking\imgui_widgets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\UNIMI\TESI\Phoenix\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{BC86129E-F4EA-312E-B8E9-56F1C4C56C9C}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{1C34CA28-0163-3DC4-8DFF-F3B3D33D0A8C}</UniqueIdentifier>
     </Filter>

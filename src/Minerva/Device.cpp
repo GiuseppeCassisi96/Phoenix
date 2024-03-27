@@ -274,6 +274,7 @@ namespace Minerva
         int width = 0, height = 0;
         glfwGetFramebufferSize(windowInstance.window, &width, &height);
         while (width == 0 || height == 0) {
+            ImGui_ImplVulkan_SetMinImageCount(engineRenderer.MAX_FRAMES_IN_FLIGHT);
             glfwGetFramebufferSize(windowInstance.window, &width, &height);
             glfwWaitEvents();
         }
@@ -315,6 +316,9 @@ namespace Minerva
 
     VkExtent2D Device::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities)
     {
+        if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+            return capabilities.currentExtent;
+        }
         int width, height;
         glfwGetFramebufferSize(windowInstance.window, &width, &height);
         VkExtent2D actualExtent =
@@ -333,9 +337,9 @@ namespace Minerva
         //I check if my physical device supports the swap chain
         SwapChainSupportDetails swapChainSupport = QuerySwapChainDetails(physicalDevice, windowInstance.windowSurface);
 
-        VkSurfaceFormatKHR surfaceFormat = ChooseSurfaceFormat(swapChainSupport.formats,
-        VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
-        VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes, VK_PRESENT_MODE_MAILBOX_KHR);
+        surfaceFormat = ChooseSurfaceFormat(swapChainSupport.formats,
+        VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
+        presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes, VK_PRESENT_MODE_MAILBOX_KHR);
         VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
         uint32_t imageNumber = swapChainSupport.capabilities.minImageCount + 1;
         if (swapChainSupport.capabilities.maxImageCount > 0 && imageNumber > swapChainSupport.capabilities.maxImageCount) {

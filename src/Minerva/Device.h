@@ -37,6 +37,8 @@ namespace Minerva
         VkFormat swapChainImageFormat;
         VkQueue graphicsQueue = VK_NULL_HANDLE;
         VkQueue presentationQueue = VK_NULL_HANDLE;
+        VkPresentModeKHR presentMode;
+        VkSurfaceFormatKHR surfaceFormat;
         //The handle of logical device
         VkDevice logicalDevice = VK_NULL_HANDLE;
         std::vector<VkImageView> swapChainImageViews;

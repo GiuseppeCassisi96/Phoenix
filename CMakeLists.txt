@@ -3,11 +3,13 @@ project(Phoenix VERSION 0.1.0 LANGUAGES C CXX)
 set (CMAKE_CXX_STANDARD 20)
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
-file(GLOB_RECURSE MINERVA_SOURCES ${PROJECT_SOURCE_DIR}/src/Minerva/*.cpp)
-file(GLOB_RECURSE MINERVA_HEADERS ${PROJECT_SOURCE_DIR}/src/Minerva/*.h)
-add_executable(Phoenix ${SOURCES} ${MINERVA_SOURCES} ${MINERVA_HEADERS})
+file(GLOB_RECURSE MINERVA_SRC ${PROJECT_SOURCE_DIR}/src/Minerva/{*.cpp, *.h})
+
 
 include(envPhoenix.cmake)
+add_executable(${PROJECT_NAME} ${SOURCES} ${MINERVA_SRC} ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp ${IMGUI_PATH}/backends/imgui_impl_vulkan.cpp
+ ${IMGUI_PATH}/imgui.cpp ${IMGUI_PATH}/imgui_draw.cpp ${IMGUI_PATH}/imgui_demo.cpp ${IMGUI_PATH}/imgui_tables.cpp
+ ${IMGUI_PATH}/imgui_widgets.cpp)
 
 #Here I set the compiler. I will use g++ compiler for .cpp files 
 message(STATUS "using ${CMAKE_GENERATOR}")
@@ -97,6 +99,8 @@ else()
     message(STATUS "Using tiny_obj include at: ${TINY_OBJ_INCLUDE_DIRS}")
 endif()
 
+include_directories(${IMGUI_PATH} ${IMGUI_PATH}/backends)
+
 if(WIN32)
     if (USE_MINGW)
     target_include_directories(${PROJECT_NAME} PUBLIC
@@ -115,6 +119,7 @@ if(WIN32)
         ${STB_INCLUDE_DIRS}
         ${TINY_OBJ_INCLUDE_DIRS}
         )
+        
     
     target_link_directories(${PROJECT_NAME} PUBLIC
         ${VULKAN_LIBRARIES}

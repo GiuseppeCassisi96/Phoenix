@@ -39,8 +39,8 @@ namespace Minerva
             firstMouse = false;
         }
     
-        float xoffset = xpos - lastX;
-        float yoffset = lastY - ypos; 
+        float xoffset = static_cast<float>(xpos - lastX);
+        float yoffset = static_cast<float>(lastY - ypos); 
         lastX = xpos;
         lastY = ypos;
 
@@ -57,9 +57,9 @@ namespace Minerva
             pitch = -89.0f;
 
         glm::vec3 direction;
-        direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        direction.y = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        direction.z = sin(glm::radians(pitch));
+        direction.x = static_cast<float>(cos(glm::radians(yaw)) * cos(glm::radians(pitch)));
+        direction.y = static_cast<float>(sin(glm::radians(yaw)) * cos(glm::radians(pitch)));
+        direction.z = static_cast<float>(sin(glm::radians(pitch)));
         direction.x *= -1.0f;
         cameraForward = glm::normalize(direction);
     }
