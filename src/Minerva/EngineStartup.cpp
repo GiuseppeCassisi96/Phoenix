@@ -49,7 +49,9 @@ namespace Minerva
         texture.CreateTextureImageView();
         texture.CreateTextureSampler();
         engineMesh.LoadModel("SteamHammer.obj");
+        engineMesh.PrepareInstanceData();
         engineRenderer.CreateVertexBuffer();
+        engineRenderer.CreateInstanceBuffer();
         engineRenderer.CreateIndexBuffer();
         engineRenderer.CreateUniformBuffers();
         engineRenderer.CreateDescriptorPool();

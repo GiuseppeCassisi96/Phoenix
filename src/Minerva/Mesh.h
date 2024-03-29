@@ -13,29 +13,40 @@
 
 namespace Minerva
 {
+    struct InstanceData
+    {
+        glm::vec3 instancePos;
+        float instanceScale;
+    };
     struct Vertex 
     {
+        glm::vec3 offsetPos;
+        float offsetScale;
         glm::vec3 pos;
         glm::vec3 color;
         glm::vec2 texCoord;
+        
 
         bool operator==(const Vertex& other) const {
             return pos == other.pos && color == other.color && texCoord == other.texCoord;
         }
 
-        static VkVertexInputBindingDescription getBindingDescription() 
+        static  std::array<VkVertexInputBindingDescription, 2> getBindingDescription() 
         {
-            VkVertexInputBindingDescription bindingDescription{};
-            bindingDescription.binding = 0;
-            bindingDescription.stride = sizeof(Vertex);
-            bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-            return bindingDescription;
+            std::array<VkVertexInputBindingDescription, 2> bindingDescriptions;
+            bindingDescriptions[0].binding = 0;
+            bindingDescriptions[0].stride = sizeof(Vertex);
+            bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+            bindingDescriptions[1].binding = 1;
+            bindingDescriptions[1].stride = sizeof(InstanceData);
+            bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+            return bindingDescriptions;
         }
 
-        static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() 
+        static std::array<VkVertexInputAttributeDescription, 5> getAttributeDescriptions() 
         {
-            std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
-            
+            std::array<VkVertexInputAttributeDescription, 5> attributeDescriptions{};
             //Position
             attributeDescriptions[0].binding = 0;
             attributeDescriptions[0].location = 0;
@@ -53,6 +64,17 @@ namespace Minerva
             attributeDescriptions[2].location = 2;
             attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
             attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+
+            //Instance pos
+            attributeDescriptions[3].binding = 1;
+            attributeDescriptions[3].location = 3;
+            attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attributeDescriptions[3].offset = offsetof(Vertex, offsetPos);
+
+            attributeDescriptions[4].binding = 1;
+            attributeDescriptions[4].location = 4;
+            attributeDescriptions[4].format = VK_FORMAT_R32_SFLOAT;
+            attributeDescriptions[4].offset = offsetof(Vertex, offsetScale);
             return attributeDescriptions;
         }
     };
@@ -61,6 +83,7 @@ namespace Minerva
         glm::mat4 model;
         glm::mat4 view;
         glm::mat4 proj;
+
     };
 
 
@@ -76,13 +99,24 @@ namespace Minerva
     class Mesh
     {
     public:
+
+        struct InstanceBuffer 
+        {
+            VkBuffer buffer{ VK_NULL_HANDLE };
+            VkDeviceMemory memory{ VK_NULL_HANDLE };
+            size_t size = 0;
+        } ;
+        int instanceNumber = 600;
+        InstanceBuffer instanceBuffer;
+        std::vector<InstanceData> instancesData;
         std::vector<Vertex> vertices;
         std::vector<uint32_t> indices;
         VkBuffer vertexBuffer;
         VkDeviceMemory vertexBufferMemory;
         void LoadModel(std::string fileName);
+        void PrepareInstanceData();
         Mesh() = default;
-        ~Mesh() = default;
+        ~Mesh();
     private:
         const std::string MODELS_PATH = "C:/UNIMI/TESI/Phoenix/src/Minerva/Models/";
     };

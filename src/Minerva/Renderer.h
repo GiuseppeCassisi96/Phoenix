@@ -30,6 +30,7 @@ namespace Minerva
         void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
         void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
         void CreateVertexBuffer();
+        void CreateInstanceBuffer();
         void CreateIndexBuffer();
         void CreateDescriptorSetLayout();
         void CreateDescriptorPool();

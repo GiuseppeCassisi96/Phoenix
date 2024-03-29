@@ -157,12 +157,15 @@ namespace Minerva
             VkBuffer vertexBuffers[] = {vertexBuffer};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+            vkCmdBindVertexBuffers(commandBuffer, 1, 1, &engineMesh.instanceBuffer.buffer, offsets);
             vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
             enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             
             
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(engineMesh.indices.size()), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(engineMesh.indices.size()), 
+            engineMesh.instanceNumber, 0, 0, 0);
+
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
         vkCmdEndRenderPass(commandBuffer);
@@ -185,9 +188,12 @@ namespace Minerva
         } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
+        
         UpdateUniformBuffer(currentFrame);
-        RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
         vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
+        vkResetCommandBuffer(commandBuffers[currentFrame],  0);
+        RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+        
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -270,6 +276,32 @@ namespace Minerva
         CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
         CopyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+
+        //destroy the staging buffer
+        vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, stagingBufferMemory, nullptr);
+    }
+
+    void Renderer::CreateInstanceBuffer()
+    {
+        VkDeviceSize bufferSize = engineMesh.instanceBuffer.size;
+        //Temp buffer
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+         | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+        void* data;
+        if(vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data)!= VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to map memory!");
+        }
+        
+        memcpy(data, engineMesh.instancesData.data(), (size_t) bufferSize);
+        vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, engineMesh.instanceBuffer.buffer, engineMesh.instanceBuffer.memory);
+        CopyBuffer(stagingBuffer, engineMesh.instanceBuffer.buffer, bufferSize);
 
         //destroy the staging buffer
         vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
@@ -388,10 +420,12 @@ namespace Minerva
             descriptorWrites[1].descriptorCount = 1;
             descriptorWrites[1].pImageInfo = &imageInfo;
 
-            vkUpdateDescriptorSets(engineDevice.logicalDevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+            vkUpdateDescriptorSets(engineDevice.logicalDevice, static_cast<uint32_t>(descriptorWrites.size()),
+             descriptorWrites.data(), 0, nullptr);
         }
     }
 
+    //Create buffer for a dynamic reading/writing
     void Renderer::CreateUniformBuffers()
     {
         VkDeviceSize bufferSize = sizeof(UniformBufferObject);
@@ -412,14 +446,12 @@ namespace Minerva
 
     void Renderer::UpdateUniformBuffer(uint32_t currentImage)
     {
-        engineTransform.Move(glm::vec3(0.0f,0.0f,-1.0f));
-        engineTransform.Scale(glm::vec3(0.6f), engineTransform.ubo.model);
-        engineTransform.Rotate(glfwGetTime() * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f), engineTransform.ubo.model);
-
+        engineTransform.Scale(glm::vec3(0.03f));
+        
         camera.UpdateViewMatrix(engineTransform.ubo.view);
 
         engineTransform.ubo.proj = glm::perspective(glm::radians(45.0f), engineDevice.swapChainExtent.width / 
-        (float) engineDevice.swapChainExtent.height, 0.1f, 10.0f);
+        (float) engineDevice.swapChainExtent.height, 0.07f, 1000.0f);
 
         engineTransform.ubo.proj[1][1] *= -1;
 
@@ -435,28 +467,43 @@ namespace Minerva
         allocInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(engineDevice.logicalDevice, &allocInfo, &commandBuffer);
+        if(vkAllocateCommandBuffers(engineDevice.logicalDevice, &allocInfo, &commandBuffer) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to allocate command buffers!");
+        }
 
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+        if(vkBeginCommandBuffer(commandBuffer, &beginInfo)!= VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to begin command buffer!");
+        }
 
         return commandBuffer;
     }
 
     void Renderer::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
     {
-        vkEndCommandBuffer(commandBuffer);
+        if(vkEndCommandBuffer(commandBuffer)!= VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to end command buffer!");
+        }
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &commandBuffer;
 
-        vkQueueSubmit(engineDevice.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(engineDevice.graphicsQueue);
+        if(vkQueueSubmit(engineDevice.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE)!= VK_SUCCESS)
+        {
+             throw std::runtime_error("failed to submit queue!");
+        }
+        if(vkQueueWaitIdle(engineDevice.graphicsQueue)!= VK_SUCCESS)
+        {
+             throw std::runtime_error("failed to queue wait!");
+        }
 
         vkFreeCommandBuffers(engineDevice.logicalDevice, commandPool, 1, &commandBuffer);
     }
@@ -601,7 +648,10 @@ namespace Minerva
             throw std::runtime_error("failed to allocate buffer memory!");
         }
 
-        vkBindBufferMemory(engineDevice.logicalDevice, buffer, bufferMemory, 0);
+        if (vkBindBufferMemory(engineDevice.logicalDevice, buffer, bufferMemory, 0)!= VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to bind buffer memory!");
+        }
     }
 
     void Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)

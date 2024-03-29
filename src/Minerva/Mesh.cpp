@@ -2,6 +2,7 @@
 #include <unordered_map>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+#include "EngineVars.h"
 
 namespace Minerva
 {
@@ -54,6 +55,33 @@ namespace Minerva
     }
     void Transformation::Rotate(const float& angle, const glm::vec3& axis, glm::mat4 model)
     {
-        ubo.model = glm::rotate(model, angle, axis);
+        ubo.model = glm::rotate(model, glm::radians(angle), axis);
+    }
+    void Mesh::PrepareInstanceData()
+    {
+        int counter = 0;
+        float row = 0.0f;
+        instancesData.resize(instanceNumber);
+
+        for(int i = 0; i < instanceNumber; i++)
+        {   
+            counter++;
+            instancesData[i].instancePos = glm::vec3(counter * 30.0f,-row * 30.0f, 0.0f);
+            if(counter >= 10)
+            {
+                counter = 0;
+                row++;
+            }
+            instancesData[i].instanceScale = 10.0f;
+            
+        }
+
+        instanceBuffer.size = instancesData.size() * sizeof(InstanceData);
+    }
+
+    Mesh::~Mesh()
+    {
+        vkDestroyBuffer(engineDevice.logicalDevice, instanceBuffer.buffer, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, instanceBuffer.memory, nullptr);
     }
 }

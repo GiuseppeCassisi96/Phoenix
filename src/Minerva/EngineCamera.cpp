@@ -15,7 +15,7 @@ namespace Minerva
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;  
-        const float cameraSpeed = 0.6f; // adjust accordingly
+        const float cameraSpeed = 4.0f; // adjust accordingly
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             cameraPos += cameraSpeed * cameraForward * deltaTime;
