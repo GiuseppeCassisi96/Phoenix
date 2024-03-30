@@ -26,4 +26,5 @@ namespace Minerva
     extern TextureManager texture;
     extern EngineCamera camera;
     extern MinervaUI engineUI;
+    extern Mesh selectedMesh;
 }

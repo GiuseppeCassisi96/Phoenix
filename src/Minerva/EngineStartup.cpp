@@ -76,11 +76,12 @@ namespace Minerva
     }
     void EngineStartup::Loop()
     {
+        Mesh selectedMesh(std::move(engineMesh.sceneMeshes[0]));
         while (!glfwWindowShouldClose(windowInstance.window)) {
             
             glfwPollEvents();
             camera.ProcessUserInput(windowInstance.window);
-            engineRenderer.DrawFrame();
+            engineRenderer.DrawFrame(selectedMesh);
             
         }
         vkDeviceWaitIdle(engineDevice.logicalDevice);

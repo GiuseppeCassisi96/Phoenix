@@ -1,51 +1,86 @@
 #include "Mesh.h"
-#include <unordered_map>
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
 #include "EngineVars.h"
+#include <unordered_map>
+
+#include <iostream>
 
 namespace Minerva
 {
     void Mesh::LoadModel(std::string fileName)
     {
-        tinyobj::attrib_t attrib;
-        std::vector<tinyobj::shape_t> shapes;
-        std::vector<tinyobj::material_t> materials;
-        std::string warn, err;
+        Assimp::Importer importer;
 
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (MODELS_PATH + fileName).c_str())) {
-            throw std::runtime_error(warn + err);
+        const aiScene *scene = importer.ReadFile((MODELS_PATH + fileName).c_str(), 
+        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
+
+        if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
+        {
+            std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+            return;
         }
+        ProcessAssimpNode(scene->mRootNode, scene);
+        
+    }
 
-        std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-
-        for (const auto& shape : shapes) {
-            for (const auto& index : shape.mesh.indices) {
-                Vertex vertex{};
-
-                vertex.pos = {
-                    attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2]
-                };
-
-                vertex.texCoord = {
-                    attrib.texcoords[2 * index.texcoord_index + 0],
-                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-                };
-
-                vertex.color = {1.0f, 1.0f, 1.0f};
-
-                if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
-                }
-
-                indices.push_back(uniqueVertices[vertex]);
-            }
+    void Mesh::ProcessAssimpNode(aiNode *node, const aiScene *scene)
+    {
+         // process all the node's meshes (if any)
+        for(unsigned int i = 0; i < node->mNumMeshes; i++)
+        {
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+            sceneMeshes.emplace_back(std::move(ProcessAssimpMesh(mesh, scene)));
+        }
+        // then do the same for each of its children
+        for(unsigned int i = 0; i < node->mNumChildren; i++)
+        {
+            ProcessAssimpNode(node->mChildren[i], scene);
         }
     }
-    void Transformation::Move(const glm::vec3& dir, glm::mat4 model)
+
+    Mesh Mesh::ProcessAssimpMesh(aiMesh *mesh, const aiScene *scene)
+    {
+
+        std::vector<Vertex> tempVertices;
+        std::vector<uint32_t> tempIndices;
+
+        for(int i = 0; i < mesh->mNumVertices; i++)
+        {
+            Vertex currentVertex;
+
+            //Position loading
+            currentVertex.pos.x = mesh->mVertices[i].x;
+            currentVertex.pos.y = mesh->mVertices[i].y;
+            currentVertex.pos.z = mesh->mVertices[i].z;
+
+
+            currentVertex.color = glm::vec3 {1.0f};
+
+            //UVCoord loading
+            if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
+            {
+                currentVertex.texCoord.x = mesh->mTextureCoords[0][i].x; 
+                currentVertex.texCoord.y = mesh->mTextureCoords[0][i].y;
+            }
+            else
+            {
+                currentVertex.texCoord = glm::vec2(0.0f, 0.0f);  
+            }
+                
+            tempVertices.emplace_back(currentVertex);
+        }
+
+
+        for(unsigned int i = 0; i < mesh->mNumFaces; i++)
+        {
+            aiFace face = mesh->mFaces[i];
+            for(unsigned int j = 0; j < face.mNumIndices; j++)
+                tempIndices.emplace_back(face.mIndices[j]);
+        }
+        std::cout << "END\n";
+        return Mesh(tempVertices, tempIndices);
+    }
+
+    void Transformation::Move(const glm::vec3 &dir, glm::mat4 model)
     {
         ubo.model = glm::translate(model, dir);
     }
@@ -78,6 +113,10 @@ namespace Minerva
 
         instanceBuffer.size = instancesData.size() * sizeof(InstanceData);
     }
+
+    Mesh::Mesh(std::vector<Vertex> inputVertices, std::vector<uint32_t> inputIndices): vertices(inputVertices), 
+    indices(inputIndices)
+    {}
 
     Mesh::~Mesh()
     {

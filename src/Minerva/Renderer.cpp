@@ -115,7 +115,7 @@ namespace Minerva
             throw std::runtime_error("failed to allocate command buffers!");
         }
     }
-    void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+    void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, const Mesh& mesh)
     {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -163,8 +163,8 @@ namespace Minerva
             enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             
             
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(engineMesh.indices.size()), 
-            engineMesh.instanceNumber, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 
+            mesh.instanceNumber, 0, 0, 0);
 
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
@@ -173,7 +173,7 @@ namespace Minerva
             throw std::runtime_error("failed to record command buffer!");
         }
     }
-    void Renderer::DrawFrame()
+    void Renderer::DrawFrame(const Mesh& mesh)
     {
         vkWaitForFences(engineDevice.logicalDevice, 1, 
         &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -192,7 +192,7 @@ namespace Minerva
         UpdateUniformBuffer(currentFrame);
         vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
         vkResetCommandBuffer(commandBuffers[currentFrame],  0);
-        RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+        RecordCommandBuffer(commandBuffers[currentFrame], imageIndex, mesh);
         
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -262,7 +262,8 @@ namespace Minerva
 
     void Renderer::CreateVertexBuffer()
     {
-        VkDeviceSize bufferSize = sizeof(engineMesh.vertices[0]) * engineMesh.vertices.size();
+        VkDeviceSize bufferSize = sizeof(engineMesh.sceneMeshes[0].vertices[0]) * 
+        engineMesh.sceneMeshes[0].vertices.size();
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
         CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
@@ -270,7 +271,7 @@ namespace Minerva
 
         void* data;
         vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, engineMesh.vertices.data(), (size_t) bufferSize);
+            memcpy(data, engineMesh.sceneMeshes[0].vertices.data(), (size_t) bufferSize);
         vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
 
         CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -310,7 +311,8 @@ namespace Minerva
 
     void Renderer::CreateIndexBuffer()
     {
-        VkDeviceSize bufferSize = sizeof(engineMesh.indices[0]) * engineMesh.indices.size();
+        VkDeviceSize bufferSize = sizeof(engineMesh.sceneMeshes[0].indices[0]) * 
+        engineMesh.sceneMeshes[0].indices.size();
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -319,7 +321,7 @@ namespace Minerva
 
         void* data;
         vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, engineMesh.indices.data(), (size_t) bufferSize);
+        memcpy(data, engineMesh.sceneMeshes[0].indices.data(), (size_t) bufferSize);
         vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
 
         CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,

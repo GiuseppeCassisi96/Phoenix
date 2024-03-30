@@ -1,6 +1,8 @@
 #pragma once
 #include "vulkan/vulkan.h"
 #include "vector"
+#include "Mesh.h"
+
 namespace Minerva
 {
     class Renderer
@@ -18,12 +20,13 @@ namespace Minerva
         bool framebufferResized = false;
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
         const int MAX_FRAMES_IN_FLIGHT = 2;
+        //Mesh renderedMesh; 
         void CreateRenderPass();
         void CreateFramebuffers();
         void CreateCommandPool();
         void CreateCommandBuffer();
-        void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-        void DrawFrame();
+        void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, const Mesh& mesh);
+        void DrawFrame(const Mesh& mesh);
         void CreateSyncObjects();
         void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
         VkBuffer& buffer, VkDeviceMemory& bufferMemory);

@@ -10,6 +10,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 namespace Minerva
 {
@@ -106,17 +109,28 @@ namespace Minerva
             VkDeviceMemory memory{ VK_NULL_HANDLE };
             size_t size = 0;
         } ;
-        int instanceNumber = 600;
+        int instanceNumber = 100;
         InstanceBuffer instanceBuffer;
         std::vector<InstanceData> instancesData;
         std::vector<Vertex> vertices;
         std::vector<uint32_t> indices;
+        std::vector<Mesh> sceneMeshes;
         VkBuffer vertexBuffer;
         VkDeviceMemory vertexBufferMemory;
         void LoadModel(std::string fileName);
+        void ProcessAssimpNode(aiNode *node, const aiScene *scene);
+        Mesh ProcessAssimpMesh(aiMesh *mesh, const aiScene *scene);
         void PrepareInstanceData();
+
         Mesh() = default;
+        Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices); 
         ~Mesh();
+
+        Mesh(const Mesh&) = delete;
+        Mesh& operator=(const Mesh&) = delete;
+
+        Mesh(Mesh&& other) = default ;
+        Mesh& operator=(Mesh&& other) = default;
     private:
         const std::string MODELS_PATH = "C:/UNIMI/TESI/Phoenix/src/Minerva/Models/";
     };

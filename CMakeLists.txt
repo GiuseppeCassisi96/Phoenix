@@ -99,6 +99,23 @@ else()
     message(STATUS "Using tiny_obj include at: ${TINY_OBJ_INCLUDE_DIRS}")
 endif()
 
+
+#Here I set the Vulkan environment. I set the include and lib path
+if(DEFINED ASSIMP_PATH)
+    set(ASSIMP_INCLUDE_DIRS "${ASSIMP_PATH}/include") 
+    set(ASSIMP_LIBRARIES "${ASSIMP_PATH}/lib/x64") 
+    set(ASSIMP_FOUND "True")
+
+endif()
+
+#If the Vulkan path isn't defined I throw an error 
+if (NOT ASSIMP_FOUND)
+    message(FATAL_ERROR "Could not find Vulkan library!")
+else()
+    message(STATUS "Using Assimp include at: ${ASSIMP_INCLUDE_DIRS}")
+    message(STATUS "Using Assimp lib at: ${ASSIMP_LIBRARIES}")
+endif()
+
 include_directories(${IMGUI_PATH} ${IMGUI_PATH}/backends)
 
 if(WIN32)
@@ -118,15 +135,17 @@ if(WIN32)
         ${GLM_PATH}
         ${STB_INCLUDE_DIRS}
         ${TINY_OBJ_INCLUDE_DIRS}
+        ${ASSIMP_INCLUDE_DIRS}
         )
         
     
     target_link_directories(${PROJECT_NAME} PUBLIC
         ${VULKAN_LIBRARIES}
         ${GLFW_LIBRARIES}
+        ${ASSIMP_LIBRARIES}
     )
 
-    target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1)
+    target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1 assimp-vc143-mt)
 
     #execute_process(COMMAND cmd /c C:/UNIMI/TESI/Phoenix/src/Minerva/Shaders/ShaderCompiler.bat)
 endif()
