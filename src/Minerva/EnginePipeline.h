@@ -15,7 +15,14 @@ namespace Minerva
         /// @param vertShaderName The name of vertex shader
         /// @param fragShaderName The name of fragment shader
         void CreatePipeline(const std::string& vertShaderName, const std::string& fragShaderName);
+        EnginePipeline() = default;
         ~EnginePipeline();
+
+        EnginePipeline(const EnginePipeline& other) = delete;
+        EnginePipeline& operator=(const EnginePipeline& other) = delete;
+
+        EnginePipeline(EnginePipeline&& other) noexcept;
+        EnginePipeline& operator=(EnginePipeline&& other) noexcept;
     private:     
         const std::string SHADERS_PATH = "C:/UNIMI/TESI/Phoenix/src/Minerva/Shaders/";
         const std::string FILE_TYPE = ".spv";

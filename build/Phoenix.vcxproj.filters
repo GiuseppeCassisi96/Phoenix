@@ -22,6 +22,9 @@
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\MinervaUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\ModelLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

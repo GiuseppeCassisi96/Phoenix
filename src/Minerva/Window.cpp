@@ -58,8 +58,25 @@ namespace Minerva
     {
         std::cout << "Destruction Window... \n";
         glfwDestroyWindow(window);
+        vkDestroySurfaceKHR(engineInstance.instance, windowSurface, nullptr);
         glfwTerminate();
     }
+    Window::Window(Window &&other) noexcept
+    {
+        windowSurface = other.windowSurface;
+        window = other.window;
+
+        glfwDestroyWindow(other.window);
+        vkDestroySurfaceKHR(engineInstance.instance, other.windowSurface, nullptr);
+    }
+    Window &Window::operator=(Window &&other) noexcept
+    {
+        windowSurface = other.windowSurface;
+        window = other.window;
+
+        glfwDestroyWindow(other.window);
+        vkDestroySurfaceKHR(engineInstance.instance, other.windowSurface, nullptr);
+
+        return *this;
+    }
 }
-
-

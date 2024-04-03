@@ -92,14 +92,6 @@ if(DEFINED TINY_OBJ_PATH)
 
 endif()
 
-#If the tiny_obj path isn't defined I throw an error 
-if (NOT TINY_OBJ_FOUND)
-    message(FATAL_ERROR "Could not find tiny_obj library!")
-else()
-    message(STATUS "Using tiny_obj include at: ${TINY_OBJ_INCLUDE_DIRS}")
-endif()
-
-
 #Here I set the Vulkan environment. I set the include and lib path
 if(DEFINED ASSIMP_PATH)
     set(ASSIMP_INCLUDE_DIRS "${ASSIMP_PATH}/include") 
@@ -134,7 +126,6 @@ if(WIN32)
         ${GLFW_INCLUDE_DIRS}
         ${GLM_PATH}
         ${STB_INCLUDE_DIRS}
-        ${TINY_OBJ_INCLUDE_DIRS}
         ${ASSIMP_INCLUDE_DIRS}
         )
         

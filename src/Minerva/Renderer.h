@@ -20,13 +20,14 @@ namespace Minerva
         bool framebufferResized = false;
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
         const int MAX_FRAMES_IN_FLIGHT = 2;
-        //Mesh renderedMesh; 
+
+
         void CreateRenderPass();
         void CreateFramebuffers();
         void CreateCommandPool();
         void CreateCommandBuffer();
-        void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, const Mesh& mesh);
-        void DrawFrame(const Mesh& mesh);
+        void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+        void DrawFrame();
         void CreateSyncObjects();
         void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
         VkBuffer& buffer, VkDeviceMemory& bufferMemory);
@@ -50,16 +51,25 @@ namespace Minerva
         VkFormat FindDepthFormat();
         bool HasStencilComponent(VkFormat format);
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
         Renderer() = default;
         ~Renderer();
+
+        Renderer(const Renderer& other) = delete;
+        Renderer& operator=(const Renderer& other) = delete;
+
+        Renderer(Renderer&& other) noexcept;
+        Renderer& operator=(Renderer&& other) noexcept;
+
     private:
-        VkBuffer vertexBuffer = VK_NULL_HANDLE;
-        VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
-        VkBuffer indexBuffer = VK_NULL_HANDLE;
-        VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
-        std::vector<VkBuffer> uniformBuffers;
-        std::vector<VkDeviceMemory> uniformBuffersMemory;
-        std::vector<void*> uniformBuffersMapped;
+
+        struct UniformBuffers
+        {
+            std::vector<VkBuffer> uniformBuffers;
+            std::vector<VkDeviceMemory> uniformBuffersMemory;
+            std::vector<void*> uniformBuffersMapped;
+        };
+        UniformBuffers UBuffers;   
         VkImage depthImage;
         VkDeviceMemory depthImageMemory;
         VkImageView depthImageView;

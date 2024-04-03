@@ -69,8 +69,16 @@ namespace Minerva
         void RecreateSwapChain();
         void CleanupSwapChain();
         VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+
         Device() = default;
         ~Device();
+
+        Device(const Device& other) = delete;
+        Device& operator=(const Device& other) = delete;
+
+        Device(Device&& other) noexcept;
+        Device& operator=(Device&& other) noexcept;
+
     private: 
         const std::vector<const char*> neededDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
         std::vector<VkImage> swapChainImages;

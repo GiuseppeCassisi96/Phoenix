@@ -13,6 +13,7 @@
 #include "TextureManager.h"
 #include "EngineCamera.h"
 #include "MinervaUI.h"
+#include "ModelLoader.h"
 namespace Minerva
 {
     extern VulkanInstance engineInstance;
@@ -21,10 +22,9 @@ namespace Minerva
     extern Device engineDevice;
     extern EnginePipeline enginePipeline;
     extern Renderer engineRenderer;
-    extern Mesh engineMesh;
     extern Transformation engineTransform;
     extern TextureManager texture;
     extern EngineCamera camera;
     extern MinervaUI engineUI;
-    extern Mesh selectedMesh;
+    extern ModelLoader engineModLoader;
 }

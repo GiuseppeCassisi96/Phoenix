@@ -11,6 +11,21 @@ namespace Minerva
         ImGui::DestroyContext();
     }
 
+    MinervaUI::MinervaUI(MinervaUI &&other) noexcept
+    {
+        font = std::move(other.font);
+
+        delete other.font;
+    }
+
+    MinervaUI &MinervaUI::operator=(MinervaUI &&other) noexcept
+    {
+        font = std::move(other.font);
+
+        delete other.font;
+        return *this;
+    }
+
     void MinervaUI::SetupUI()
     {
 

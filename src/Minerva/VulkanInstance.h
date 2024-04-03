@@ -7,11 +7,18 @@ namespace Minerva
     class VulkanInstance
     {
     public:
-        VulkanInstance() = default;
-        ~VulkanInstance();
+        
         VkInstance instance = nullptr;
-        DebugManager debugLayer;
         /// @brief Creates the instance of Vulkan using hardcoded informations 
         void CreateInstance();
+
+        VulkanInstance() = default;
+        ~VulkanInstance();
+
+        VulkanInstance(const VulkanInstance& other) = delete;
+        VulkanInstance& operator=(const VulkanInstance& other) = delete;
+
+        VulkanInstance(VulkanInstance&& other) noexcept;
+        VulkanInstance& operator=(VulkanInstance&& other) noexcept;
     };
 }

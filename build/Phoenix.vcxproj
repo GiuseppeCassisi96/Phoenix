@@ -324,6 +324,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineStartup.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Mesh.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\MinervaUI.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\ModelLoader.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\TextureManager.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\VulkanInstance.cpp" />

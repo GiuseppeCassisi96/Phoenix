@@ -14,11 +14,11 @@ namespace Minerva
     Device engineDevice;
     EnginePipeline enginePipeline;
     Renderer engineRenderer;
-    Mesh engineMesh;
     Transformation engineTransform;
     TextureManager texture;
     EngineCamera camera;
     MinervaUI engineUI;
+    ModelLoader engineModLoader;
 
     void EngineStartup::RunEngine()
     {
@@ -48,8 +48,9 @@ namespace Minerva
         texture.CreateTextureImage("SteamHammerColor.png");
         texture.CreateTextureImageView();
         texture.CreateTextureSampler();
-        engineMesh.LoadModel("SteamHammer.obj");
-        engineMesh.PrepareInstanceData();
+        engineModLoader.LoadModel("SteamHammer.obj");
+        
+        engineModLoader.PrepareInstanceData();
         engineRenderer.CreateVertexBuffer();
         engineRenderer.CreateInstanceBuffer();
         engineRenderer.CreateIndexBuffer();
@@ -58,7 +59,7 @@ namespace Minerva
         engineRenderer.CreateDescriptorSets();
         engineRenderer.CreateCommandBuffer();
         engineRenderer.CreateSyncObjects();
-
+    
         
         glfwSetInputMode(windowInstance.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         camera.SetupViewMatrix(engineTransform.ubo.view);
@@ -76,12 +77,11 @@ namespace Minerva
     }
     void EngineStartup::Loop()
     {
-        Mesh selectedMesh(std::move(engineMesh.sceneMeshes[0]));
         while (!glfwWindowShouldClose(windowInstance.window)) {
             
             glfwPollEvents();
             camera.ProcessUserInput(windowInstance.window);
-            engineRenderer.DrawFrame(selectedMesh);
+            engineRenderer.DrawFrame();
             
         }
         vkDeviceWaitIdle(engineDevice.logicalDevice);

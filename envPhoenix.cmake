@@ -1,4 +1,3 @@
-set(TINY_OBJ_PATH ${PROJECT_SOURCE_DIR}/Dependencies)
 set(STB_PATH ${PROJECT_SOURCE_DIR}/Dependencies/)
 set(GLM_PATH ${PROJECT_SOURCE_DIR}/Dependencies/glm)
 set(GLFW_PATH ${PROJECT_SOURCE_DIR}/Dependencies/GLFW/glfw-3.3.8.bin.WIN64)

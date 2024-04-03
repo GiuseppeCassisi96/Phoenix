@@ -109,18 +109,17 @@ namespace Minerva
             VkDeviceMemory memory{ VK_NULL_HANDLE };
             size_t size = 0;
         } ;
-        int instanceNumber = 100;
-        InstanceBuffer instanceBuffer;
-        std::vector<InstanceData> instancesData;
         std::vector<Vertex> vertices;
         std::vector<uint32_t> indices;
-        std::vector<Mesh> sceneMeshes;
-        VkBuffer vertexBuffer;
-        VkDeviceMemory vertexBufferMemory;
-        void LoadModel(std::string fileName);
-        void ProcessAssimpNode(aiNode *node, const aiScene *scene);
-        Mesh ProcessAssimpMesh(aiMesh *mesh, const aiScene *scene);
-        void PrepareInstanceData();
+        struct MeshBuffer
+        {
+            VkBuffer vertexBuffer = VK_NULL_HANDLE;
+            VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
+            VkBuffer indexBuffer = VK_NULL_HANDLE;
+            VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
+            size_t size = 0;
+        };
+        MeshBuffer meshBuffer;
 
         Mesh() = default;
         Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices); 
@@ -129,8 +128,8 @@ namespace Minerva
         Mesh(const Mesh&) = delete;
         Mesh& operator=(const Mesh&) = delete;
 
-        Mesh(Mesh&& other) = default ;
-        Mesh& operator=(Mesh&& other) = default;
+        Mesh(Mesh&& other) noexcept;
+        Mesh& operator=(Mesh&& other) noexcept;
     private:
         const std::string MODELS_PATH = "C:/UNIMI/TESI/Phoenix/src/Minerva/Models/";
     };

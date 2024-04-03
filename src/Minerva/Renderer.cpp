@@ -115,7 +115,7 @@ namespace Minerva
             throw std::runtime_error("failed to allocate command buffers!");
         }
     }
-    void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, const Mesh& mesh)
+    void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
     {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -154,17 +154,18 @@ namespace Minerva
             scissor.extent = engineDevice.swapChainExtent;
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-            VkBuffer vertexBuffers[] = {vertexBuffer};
+            Mesh* mesh = &engineModLoader.sceneMeshes[0];
+            VkBuffer vertexBuffers[] = {mesh->meshBuffer.vertexBuffer};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-            vkCmdBindVertexBuffers(commandBuffer, 1, 1, &engineMesh.instanceBuffer.buffer, offsets);
-            vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindVertexBuffers(commandBuffer, 1, 1, &engineModLoader.instanceBuffer.buffer, offsets);
+            vkCmdBindIndexBuffer(commandBuffer, mesh->meshBuffer.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
             enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             
             
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 
-            mesh.instanceNumber, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->indices.size()), 
+            engineModLoader.instanceNumber, 0, 0, 0);
 
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
@@ -173,7 +174,7 @@ namespace Minerva
             throw std::runtime_error("failed to record command buffer!");
         }
     }
-    void Renderer::DrawFrame(const Mesh& mesh)
+    void Renderer::DrawFrame()
     {
         vkWaitForFences(engineDevice.logicalDevice, 1, 
         &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -192,7 +193,7 @@ namespace Minerva
         UpdateUniformBuffer(currentFrame);
         vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
         vkResetCommandBuffer(commandBuffers[currentFrame],  0);
-        RecordCommandBuffer(commandBuffers[currentFrame], imageIndex, mesh);
+        RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
         
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -262,8 +263,8 @@ namespace Minerva
 
     void Renderer::CreateVertexBuffer()
     {
-        VkDeviceSize bufferSize = sizeof(engineMesh.sceneMeshes[0].vertices[0]) * 
-        engineMesh.sceneMeshes[0].vertices.size();
+        VkDeviceSize bufferSize = sizeof(engineModLoader.sceneMeshes[0].vertices[0]) * 
+        engineModLoader.sceneMeshes[0].vertices.size();
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
         CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
@@ -271,12 +272,13 @@ namespace Minerva
 
         void* data;
         vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, engineMesh.sceneMeshes[0].vertices.data(), (size_t) bufferSize);
+            memcpy(data, engineModLoader.sceneMeshes[0].vertices.data(), (size_t) bufferSize);
         vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
 
         CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
-        CopyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, engineModLoader.sceneMeshes[0].meshBuffer.vertexBuffer, 
+        engineModLoader.sceneMeshes[0].meshBuffer.vertexBufferMemory);
+        CopyBuffer(stagingBuffer, engineModLoader.sceneMeshes[0].meshBuffer.vertexBuffer, bufferSize);
 
         //destroy the staging buffer
         vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
@@ -285,7 +287,7 @@ namespace Minerva
 
     void Renderer::CreateInstanceBuffer()
     {
-        VkDeviceSize bufferSize = engineMesh.instanceBuffer.size;
+        VkDeviceSize bufferSize = engineModLoader.instanceBuffer.size;
         //Temp buffer
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -298,11 +300,11 @@ namespace Minerva
             throw std::runtime_error("failed to map memory!");
         }
         
-        memcpy(data, engineMesh.instancesData.data(), (size_t) bufferSize);
+        memcpy(data, engineModLoader.instancesData.data(), (size_t) bufferSize);
         vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
         CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, engineMesh.instanceBuffer.buffer, engineMesh.instanceBuffer.memory);
-        CopyBuffer(stagingBuffer, engineMesh.instanceBuffer.buffer, bufferSize);
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, engineModLoader.instanceBuffer.buffer, engineModLoader.instanceBuffer.memory);
+        CopyBuffer(stagingBuffer, engineModLoader.instanceBuffer.buffer, bufferSize);
 
         //destroy the staging buffer
         vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
@@ -311,8 +313,8 @@ namespace Minerva
 
     void Renderer::CreateIndexBuffer()
     {
-        VkDeviceSize bufferSize = sizeof(engineMesh.sceneMeshes[0].indices[0]) * 
-        engineMesh.sceneMeshes[0].indices.size();
+        VkDeviceSize bufferSize = sizeof(engineModLoader.sceneMeshes[0].indices[0]) * 
+        engineModLoader.sceneMeshes[0].indices.size();
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -321,13 +323,15 @@ namespace Minerva
 
         void* data;
         vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, engineMesh.sceneMeshes[0].indices.data(), (size_t) bufferSize);
+        memcpy(data, engineModLoader.sceneMeshes[0].indices.data(), (size_t) bufferSize);
         vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
 
+        
         CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, engineModLoader.sceneMeshes[0].meshBuffer.indexBuffer, 
+        engineModLoader.sceneMeshes[0].meshBuffer.indexBufferMemory);
 
-        CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
+        CopyBuffer(stagingBuffer, engineModLoader.sceneMeshes[0].meshBuffer.indexBuffer, bufferSize);
 
         vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
         vkFreeMemory(engineDevice.logicalDevice, stagingBufferMemory, nullptr);
@@ -395,7 +399,7 @@ namespace Minerva
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = uniformBuffers[i];
+            bufferInfo.buffer = UBuffers.uniformBuffers[i];
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -432,17 +436,17 @@ namespace Minerva
     {
         VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-        uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-        uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-        uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+        UBuffers.uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+        UBuffers.uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+        UBuffers.uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-            uniformBuffers[i], uniformBuffersMemory[i]);
+            UBuffers.uniformBuffers[i], UBuffers.uniformBuffersMemory[i]);
 
-            vkMapMemory(engineDevice.logicalDevice, uniformBuffersMemory[i], 0,
-            bufferSize, 0, &uniformBuffersMapped[i]);
+            vkMapMemory(engineDevice.logicalDevice, UBuffers.uniformBuffersMemory[i], 0,
+            bufferSize, 0, &UBuffers.uniformBuffersMapped[i]);
         }
     }
 
@@ -457,7 +461,7 @@ namespace Minerva
 
         engineTransform.ubo.proj[1][1] *= -1;
 
-        memcpy(uniformBuffersMapped[currentImage], &engineTransform.ubo, sizeof(engineTransform.ubo));
+        memcpy(UBuffers.uniformBuffersMapped[currentImage], &engineTransform.ubo, sizeof(engineTransform.ubo));
     }
 
     VkCommandBuffer Renderer::BeginSingleTimeCommands()
@@ -708,20 +712,114 @@ namespace Minerva
             vkDestroySemaphore(engineDevice.logicalDevice, imageAvailableSemaphores[i], nullptr);
             vkDestroyFence(engineDevice.logicalDevice, inFlightFences[i], nullptr);
         }
-        for (auto framebuffer : engineRenderer.swapChainFramebuffers) {
+        for (auto framebuffer : swapChainFramebuffers) {
             vkDestroyFramebuffer(engineDevice.logicalDevice, framebuffer, nullptr);
         }
         vkDestroyCommandPool(engineDevice.logicalDevice, commandPool, nullptr);
         vkDestroyRenderPass(engineDevice.logicalDevice, renderPass, nullptr);
-        vkDestroyBuffer(engineDevice.logicalDevice, indexBuffer, nullptr);
-        vkFreeMemory(engineDevice.logicalDevice, indexBufferMemory, nullptr);
-        vkDestroyBuffer(engineDevice.logicalDevice, vertexBuffer, nullptr);
-        vkFreeMemory(engineDevice.logicalDevice, vertexBufferMemory, nullptr);
+
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroyBuffer(engineDevice.logicalDevice, uniformBuffers[i], nullptr);
-            vkFreeMemory(engineDevice.logicalDevice, uniformBuffersMemory[i], nullptr);
+            vkDestroyBuffer(engineDevice.logicalDevice, UBuffers.uniformBuffers[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, UBuffers.uniformBuffersMemory[i], nullptr);
         }
         vkDestroyDescriptorPool(engineDevice.logicalDevice, descriptorPool, nullptr);
         vkDestroyDescriptorSetLayout(engineDevice.logicalDevice, descriptorSetLayout, nullptr);
+    }
+    Renderer::Renderer(Renderer &&other) noexcept
+    {
+        currentFrame = std::move(other.currentFrame);
+        renderPass = std::move(other.renderPass);
+        swapChainFramebuffers = std::move(other.swapChainFramebuffers);
+        commandPool = std::move(other.commandPool);
+        commandBuffers = std::move(other.commandBuffers);
+        imageAvailableSemaphores = std::move(other.imageAvailableSemaphores);
+        renderFinishedSemaphores = std::move(other.renderFinishedSemaphores);
+        inFlightFences = std::move(other.inFlightFences);
+        descriptorSetLayout = std::move(other.descriptorSetLayout);
+        framebufferResized = std::move(other.framebufferResized);
+        descriptorPool = std::move(other.descriptorPool);
+        UBuffers.uniformBuffers = std::move(other.UBuffers.uniformBuffers);
+        UBuffers.uniformBuffersMemory = std::move(other.UBuffers.uniformBuffersMemory);
+        UBuffers.uniformBuffersMapped = std::move(other.UBuffers.uniformBuffersMapped);
+        depthImage = std::move(other.depthImage);
+        depthImageMemory = std::move(other.depthImageMemory);
+        depthImageView = std::move(other.depthImageView);
+        descriptorSets = std::move(other.descriptorSets);
+
+        //CLEAN
+        vkDestroyRenderPass(engineDevice.logicalDevice, other.renderPass, nullptr);
+        for (auto framebuffer : other.swapChainFramebuffers) 
+        {
+            vkDestroyFramebuffer(engineDevice.logicalDevice, framebuffer, nullptr);
+        }
+        vkDestroyCommandPool(engineDevice.logicalDevice, other.commandPool, nullptr);
+        for (size_t i = 0; i < other.MAX_FRAMES_IN_FLIGHT; i++) 
+        {
+            vkDestroySemaphore(engineDevice.logicalDevice, other.renderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(engineDevice.logicalDevice, other.imageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(engineDevice.logicalDevice, other.inFlightFences[i], nullptr);
+        }
+        vkDestroyDescriptorSetLayout(engineDevice.logicalDevice, other.descriptorSetLayout, nullptr);
+        vkDestroyDescriptorPool(engineDevice.logicalDevice, other.descriptorPool, nullptr);
+
+        for (size_t i = 0; i < other.MAX_FRAMES_IN_FLIGHT; i++) 
+        {
+            vkDestroyBuffer(engineDevice.logicalDevice, other.UBuffers.uniformBuffers[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, other.UBuffers.uniformBuffersMemory[i], nullptr);
+        }
+
+        vkDestroyImageView(engineDevice.logicalDevice, other.depthImageView, nullptr);
+        vkDestroyImage(engineDevice.logicalDevice, other.depthImage, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, other.depthImageMemory, nullptr);
+
+    }
+    Renderer &Renderer::operator=(Renderer &&other) noexcept
+    {
+        currentFrame = std::move(other.currentFrame);
+        renderPass = std::move(other.renderPass);
+        swapChainFramebuffers = std::move(other.swapChainFramebuffers);
+        commandPool = std::move(other.commandPool);
+        commandBuffers = std::move(other.commandBuffers);
+        imageAvailableSemaphores = std::move(other.imageAvailableSemaphores);
+        renderFinishedSemaphores = std::move(other.renderFinishedSemaphores);
+        inFlightFences = std::move(other.inFlightFences);
+        descriptorSetLayout = std::move(other.descriptorSetLayout);
+        framebufferResized = std::move(other.framebufferResized);
+        descriptorPool = std::move(other.descriptorPool);
+        UBuffers.uniformBuffers = std::move(other.UBuffers.uniformBuffers);
+        UBuffers.uniformBuffersMemory = std::move(other.UBuffers.uniformBuffersMemory);
+        UBuffers.uniformBuffersMapped = std::move(other.UBuffers.uniformBuffersMapped);
+        depthImage = std::move(other.depthImage);
+        depthImageMemory = std::move(other.depthImageMemory);
+        depthImageView = std::move(other.depthImageView);
+        descriptorSets = std::move(other.descriptorSets);
+
+        //CLEAN
+        vkDestroyRenderPass(engineDevice.logicalDevice, other.renderPass, nullptr);
+        for (auto framebuffer : other.swapChainFramebuffers) 
+        {
+            vkDestroyFramebuffer(engineDevice.logicalDevice, framebuffer, nullptr);
+        }
+        vkDestroyCommandPool(engineDevice.logicalDevice, other.commandPool, nullptr);
+        for (size_t i = 0; i < other.MAX_FRAMES_IN_FLIGHT; i++) 
+        {
+            vkDestroySemaphore(engineDevice.logicalDevice, other.renderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(engineDevice.logicalDevice, other.imageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(engineDevice.logicalDevice, other.inFlightFences[i], nullptr);
+        }
+        vkDestroyDescriptorSetLayout(engineDevice.logicalDevice, other.descriptorSetLayout, nullptr);
+        vkDestroyDescriptorPool(engineDevice.logicalDevice, other.descriptorPool, nullptr);
+
+        for (size_t i = 0; i < other.MAX_FRAMES_IN_FLIGHT; i++) 
+        {
+            vkDestroyBuffer(engineDevice.logicalDevice, other.UBuffers.uniformBuffers[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, other.UBuffers.uniformBuffersMemory[i], nullptr);
+        }
+
+        vkDestroyImageView(engineDevice.logicalDevice, other.depthImageView, nullptr);
+        vkDestroyImage(engineDevice.logicalDevice, other.depthImage, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, other.depthImageMemory, nullptr);
+
+        return *this;
     }
 }

@@ -161,6 +161,26 @@ namespace Minerva
         vkDestroyPipelineLayout(engineDevice.logicalDevice, pipelineLayout, nullptr);
     }
 
+    EnginePipeline::EnginePipeline(EnginePipeline &&other) noexcept
+    {
+        graphicsPipeline = std::move(other.graphicsPipeline);
+        pipelineLayout = std::move(other.pipelineLayout);
+
+        vkDestroyPipeline(engineDevice.logicalDevice, other.graphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(engineDevice.logicalDevice, other.pipelineLayout, nullptr);
+    }
+
+    EnginePipeline &EnginePipeline::operator=(EnginePipeline &&other) noexcept
+    {
+        graphicsPipeline = std::move(other.graphicsPipeline);
+        pipelineLayout = std::move(other.pipelineLayout);
+
+        vkDestroyPipeline(engineDevice.logicalDevice, other.graphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(engineDevice.logicalDevice, other.pipelineLayout, nullptr);
+
+        return *this;
+    }
+
     std::vector<char> EnginePipeline::ReadFile(const std::string &filename)
     {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);

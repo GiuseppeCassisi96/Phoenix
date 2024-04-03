@@ -111,4 +111,30 @@ namespace Minerva
         vkDestroyImage(engineDevice.logicalDevice, textureImage, nullptr);
         vkFreeMemory(engineDevice.logicalDevice, textureImageMemory, nullptr);
     }
+    TextureManager::TextureManager(TextureManager &&other) noexcept
+    {
+        textureImageView = std::move(other.textureImageView);
+        textureSampler = std::move(other.textureSampler);
+        textureImage = std::move(other.textureImage);
+        textureImageMemory = std::move(other.textureImageMemory);
+
+        vkDestroySampler(engineDevice.logicalDevice, other.textureSampler, nullptr);
+        vkDestroyImageView(engineDevice.logicalDevice, other.textureImageView, nullptr);
+        vkDestroyImage(engineDevice.logicalDevice, other.textureImage, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, other.textureImageMemory, nullptr);
+    }
+    TextureManager &TextureManager::operator=(TextureManager &&other) noexcept
+    {
+        textureImageView = std::move(other.textureImageView);
+        textureSampler = std::move(other.textureSampler);
+        textureImage = std::move(other.textureImage);
+        textureImageMemory = std::move(other.textureImageMemory);
+
+        vkDestroySampler(engineDevice.logicalDevice, other.textureSampler, nullptr);
+        vkDestroyImageView(engineDevice.logicalDevice, other.textureImageView, nullptr);
+        vkDestroyImage(engineDevice.logicalDevice, other.textureImage, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, other.textureImageMemory, nullptr);
+
+        return *this;
+    }
 }

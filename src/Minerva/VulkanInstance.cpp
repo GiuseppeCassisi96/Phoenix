@@ -1,6 +1,7 @@
 #include "VulkanInstance.h"
 #include <stdexcept>
 #include <iostream>
+#include "EngineVars.h"
 
 namespace Minerva
 {
@@ -56,5 +57,17 @@ namespace Minerva
     {
         std::cout << "Destruction Vulkan instance... \n";
         vkDestroyInstance(instance, nullptr);
+    }
+    VulkanInstance::VulkanInstance(VulkanInstance &&other) noexcept
+    {
+        instance = other.instance;
+        vkDestroyInstance(other.instance, nullptr);
+    }
+    VulkanInstance &VulkanInstance::operator=(VulkanInstance &&other) noexcept
+    {
+        instance = other.instance;
+        vkDestroyInstance(other.instance, nullptr);
+        
+        return *this;
     }
 }

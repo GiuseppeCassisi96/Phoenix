@@ -230,9 +230,57 @@ namespace Minerva
         }
 
         vkDestroySwapchainKHR(logicalDevice, swapChain, nullptr);
-        vkDestroySurfaceKHR(engineInstance.instance, windowInstance.windowSurface, nullptr);
         vkDestroyDevice(logicalDevice, nullptr);
         
+    }
+
+    Device::Device(Device &&other) noexcept
+    {
+        swapChain = std::move(other.swapChain);
+        physicalDevice = std::move(other.physicalDevice);
+        swapChainExtent = std::move(other.swapChainExtent);
+        swapChainImageFormat = std::move(other.swapChainImageFormat);
+        graphicsQueue = std::move(other.graphicsQueue);
+        presentationQueue = std::move(other.presentationQueue);
+        presentMode = std::move(other.presentMode);
+        surfaceFormat = std::move(other.surfaceFormat);
+        logicalDevice = std::move(other.logicalDevice);
+        swapChainImageViews = std::move(other.swapChainImageViews);
+
+        vkDestroySwapchainKHR(logicalDevice, other.swapChain, nullptr);
+        other.physicalDevice = VK_NULL_HANDLE;
+        other.graphicsQueue = VK_NULL_HANDLE;
+        other.presentationQueue = VK_NULL_HANDLE;
+        vkDestroyDevice(other.logicalDevice, nullptr);
+         for (auto imageView : other.swapChainImageViews) {
+            vkDestroyImageView(logicalDevice, imageView, nullptr);
+        }
+        
+
+    }
+
+    Device &Device::operator=(Device &&other) noexcept
+    {
+        swapChain = std::move(other.swapChain);
+        physicalDevice = std::move(other.physicalDevice);
+        swapChainExtent = std::move(other.swapChainExtent);
+        swapChainImageFormat = std::move(other.swapChainImageFormat);
+        graphicsQueue = std::move(other.graphicsQueue);
+        presentationQueue = std::move(other.presentationQueue);
+        presentMode = std::move(other.presentMode);
+        surfaceFormat = std::move(other.surfaceFormat);
+        logicalDevice = std::move(other.logicalDevice);
+        swapChainImageViews = std::move(other.swapChainImageViews);
+
+        vkDestroySwapchainKHR(logicalDevice, other.swapChain, nullptr);
+        other.physicalDevice = VK_NULL_HANDLE;
+        other.graphicsQueue = VK_NULL_HANDLE;
+        other.presentationQueue = VK_NULL_HANDLE;
+        vkDestroyDevice(other.logicalDevice, nullptr);
+         for (auto imageView : other.swapChainImageViews) {
+            vkDestroyImageView(logicalDevice, imageView, nullptr);
+        }
+        return *this;
     }
 
     void Device::CleanupSwapChain()

@@ -16,6 +16,12 @@ namespace Minerva
         VkDeviceMemory& imageMemory);
         TextureManager() = default;
         ~TextureManager();
+
+        TextureManager(const TextureManager& other) = delete;
+        TextureManager& operator=(const TextureManager& other) = delete;
+
+        TextureManager(TextureManager&& other) noexcept;
+        TextureManager& operator=(TextureManager&& other) noexcept;
     private:
         const std::string TEXTURES_PATH = "C:/UNIMI/TESI/Phoenix/src/Minerva/Textures/";
         VkImage textureImage = VK_NULL_HANDLE;
