@@ -1,7 +1,8 @@
 #include "EngineVars.h"
 #include "MinervaUI.h"
+#include "EngineStartup.h"
 
-#include <stdexcept>
+
 
 namespace Minerva
 {
@@ -27,9 +28,9 @@ namespace Minerva
         return *this;
     }
 
-    void MinervaUI::SetupUI()
+    void MinervaUI::SetupUI(EngineStartup& engine)
     {
-
+        this->engine = &engine;
         QueueFamilyIndices indices = engineDevice.FindQueueFamilies(engineDevice.physicalDevice,
         windowInstance.windowSurface);
 
@@ -81,6 +82,27 @@ namespace Minerva
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / 
             ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::Text("Number of bones: %d", engineModLoader.info.numberOfBones);
+            ImGui::Text("Number of triangles: %d", engineModLoader.info.numberOfPolygons);
+            ImGui::Text("Number of vertices: %d", engineModLoader.info.numberOfVertices);
+            ImGui::Text("Number of instances: %d", engineModLoader.instanceNumber);
+            if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
+            {
+                if(ImGui::Button("Idle"))
+                {
+                    this->engine->animator.PlayAnimation(&this->engine->animations[0]);
+                }
+
+                if(ImGui::Button("Walk"))
+                {
+                    this->engine->animator.PlayAnimation(&this->engine->animations[1]);
+                }
+
+                if(ImGui::Button("Run"))
+                {
+                    this->engine->animator.PlayAnimation(&this->engine->animations[2]);
+                }
+            }    
             ImGui::PopFont();
             ImGui::End();
         }

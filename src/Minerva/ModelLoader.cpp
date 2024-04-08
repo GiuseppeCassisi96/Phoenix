@@ -1,5 +1,5 @@
 #include "ModelLoader.h"
-#include <iostream>
+
 #include "EngineVars.h"
 
 
@@ -86,6 +86,9 @@ namespace Minerva
         if(mesh->mNumBones > 0)
             ExtractBoneWeightForVertices(createdMesh.vertices, mesh, scene);
         
+        info.numberOfBones = mesh->mNumBones;
+        info.numberOfPolygons = mesh->mNumFaces;
+        info.numberOfVertices = mesh->mNumVertices;
         return createdMesh;
     }
     void ModelLoader::PrepareInstanceData(SampleType type)

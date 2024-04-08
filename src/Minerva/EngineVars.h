@@ -9,6 +9,9 @@
 #include "EngineCamera.h"
 #include "MinervaUI.h"
 #include "ModelLoader.h"
+#include <iostream>
+#include <stdexcept>
+#include "vulkan/vulkan.h"
 
 
 namespace Minerva

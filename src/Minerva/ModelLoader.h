@@ -11,14 +11,23 @@ namespace Minerva
     {
         std::string textureName;
         std::string modelName;
-        std::string animName;
+        std::vector<std::string> animName;
+        int animNumber;
         float scale;
         int rowDim;
+    };
+
+    struct MeshInfo
+    {
+        int numberOfVertices;
+        int numberOfPolygons;
+        int numberOfBones;
     };
     class ModelLoader
     {
     public:
-        int instanceNumber = 100;
+        MeshInfo info;
+        int instanceNumber;
         std::vector<InstanceData> instancesData;
         Mesh::InstanceBuffer instanceBuffer;
         std::vector<Mesh> sceneMeshes;

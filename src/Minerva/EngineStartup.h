@@ -1,6 +1,5 @@
 #pragma once
 #include "AnimationManager.h"
-#include "string.h"
 #include <unordered_map>
 #include "EngineVars.h"
 namespace Minerva
@@ -15,7 +14,7 @@ namespace Minerva
             {"1", SampleType()}
             
         };
-        Animation anim;
+        std::vector<Animation> animations;
         Animator animator;
         void RunEngine();
     private:
