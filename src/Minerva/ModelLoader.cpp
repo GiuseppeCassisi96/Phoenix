@@ -10,7 +10,7 @@ namespace Minerva
         Assimp::Importer importer;
 
         const aiScene *scene = importer.ReadFile((MODELS_PATH + fileName).c_str(), 
-        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
+        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices );
 
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
         {
@@ -18,6 +18,11 @@ namespace Minerva
             return;
         }
         ProcessAssimpNode(scene->mRootNode, scene);
+        if(sceneMeshes[0].vertices[0].boneID[0] == -1)
+            sceneMeshes[0].typeOfMesh = Mesh::MeshType::Static;
+        else
+            sceneMeshes[0].typeOfMesh = Mesh::MeshType::Skeletal;
+
     }
     void ModelLoader::ProcessAssimpNode(aiNode *node, const aiScene *scene)
     {
@@ -32,15 +37,18 @@ namespace Minerva
         {
             ProcessAssimpNode(node->mChildren[i], scene);
         }
+
     }
     Mesh ModelLoader::ProcessAssimpMesh(aiMesh *mesh, const aiScene *scene)
     {
-        std::vector<Vertex> tempVertices;
+        std::vector<Minerva::Mesh::Vertex> tempVertices;
         std::vector<uint32_t> tempIndices;
-
-        for(int i = 0; i < mesh->mNumVertices; i++)
+        Mesh createdMesh;
+        
+        
+        for(unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
-            Vertex currentVertex;
+            Minerva::Mesh::Vertex currentVertex;
 
             //Position loading
             currentVertex.pos.x = mesh->mVertices[i].x;
@@ -60,7 +68,8 @@ namespace Minerva
             {
                 currentVertex.texCoord = glm::vec2(0.0f, 0.0f);  
             }
-                
+            
+            SetupBoneData(currentVertex);
             tempVertices.emplace_back(currentVertex);
         }
 
@@ -71,9 +80,15 @@ namespace Minerva
             for(unsigned int j = 0; j < face.mNumIndices; j++)
                 tempIndices.emplace_back(face.mIndices[j]);
         }
-        return Mesh(tempVertices, tempIndices);
+       
+        createdMesh.vertices = tempVertices;
+        createdMesh.indices = tempIndices;
+        if(mesh->mNumBones > 0)
+            ExtractBoneWeightForVertices(createdMesh.vertices, mesh, scene);
+        
+        return createdMesh;
     }
-    void ModelLoader::PrepareInstanceData()
+    void ModelLoader::PrepareInstanceData(SampleType type)
     {
         int counter = 0;
         float row = 0.0f;
@@ -83,16 +98,78 @@ namespace Minerva
         {   
             counter++;
             instancesData[i].instancePos = glm::vec3(counter * 30.0f,-row * 30.0f, 0.0f);
-            if(counter >= 10)
+            if(counter >= type.rowDim)
             {
                 counter = 0;
                 row++;
             }
-            instancesData[i].instanceScale = 10.0f;
+            instancesData[i].instanceScale = type.scale;
             
         }
 
         instanceBuffer.size = instancesData.size() * sizeof(InstanceData);
+    }
+
+    void ModelLoader::SetupBoneData(Minerva::Mesh::Vertex& currentVertex, int boneID, float weight)
+    {
+        for(int i = 0; i < MAX_BONE_PER_VERTEX; i++)
+        {
+            currentVertex.boneID[i] = boneID;
+            currentVertex.weight[i] = weight; 
+        }
+    }
+
+    void ModelLoader::ExtractBoneWeightForVertices(std::vector<Mesh::Vertex> &vertices, aiMesh *mesh, const aiScene *scene)
+    {
+        std::vector<float> boneweight;
+        for (unsigned int boneIndex = 0; boneIndex < mesh->mNumBones; ++boneIndex)
+        {
+            int boneID = -1;
+            std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
+            if (infoBoneMap.find(boneName) == infoBoneMap.end())
+            {
+                Mesh::BoneInfo newBoneInfo;
+                newBoneInfo.id = boneNumber;
+                newBoneInfo.offset = ConvertMatrixToGLMFormat(
+                    mesh->mBones[boneIndex]->mOffsetMatrix);
+                infoBoneMap[boneName] = newBoneInfo;
+                boneID = boneNumber;
+                boneNumber++;
+            }
+            else
+            {
+                boneID = infoBoneMap[boneName].id;
+            }
+            assert(boneID != -1);
+            auto weights = mesh->mBones[boneIndex]->mWeights;
+            int numWeights = mesh->mBones[boneIndex]->mNumWeights;
+            float weight;
+            for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+            {
+                int vertexId = weights[weightIndex].mVertexId;
+                weight = weights[weightIndex].mWeight;
+                assert(vertexId <= vertices.size());
+                SetupBoneData(vertices[vertexId], boneID, weight);
+                for(int i = 0; i < MAX_BONE_PER_VERTEX; i++)
+                {
+                    vertices[vertexId].boneID[i] = boneID;
+                    vertices[vertexId].weight[i] = weight; 
+                }
+            }
+            boneweight.emplace_back(weight);
+        }
+
+    }
+
+    glm::mat4 ModelLoader::ConvertMatrixToGLMFormat(const aiMatrix4x4 &from)
+    {
+        glm::mat4 to;
+		//the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
+		to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+		to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+		to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+		to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+		return to;
     }
 
     ModelLoader::~ModelLoader()

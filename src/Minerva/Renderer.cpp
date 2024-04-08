@@ -1,8 +1,12 @@
 #include "Renderer.h"
-#include "EngineVars.h"
 #include <stdexcept>
 #include <iostream>
 #include <chrono>
+#include "EngineVars.h"
+
+
+
+
 namespace Minerva
 {
     void Renderer::CreateRenderPass()
@@ -351,8 +355,14 @@ namespace Minerva
         samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         samplerLayoutBinding.pImmutableSamplers = nullptr;
         samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-        
-        std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+
+        VkDescriptorSetLayoutBinding animLayoutBinding{};
+        animLayoutBinding.binding = 2;
+        animLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        animLayoutBinding.descriptorCount = 1;
+        animLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+        std::array<VkDescriptorSetLayoutBinding, 3> bindings = {uboLayoutBinding, samplerLayoutBinding, animLayoutBinding};
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -399,16 +409,21 @@ namespace Minerva
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = UBuffers.uniformBuffers[i];
+            bufferInfo.buffer = transformationUBuffers.uniformBuffers[i];
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(UniformBufferObject);
+
+            VkDescriptorBufferInfo animBufferInfo{};
+            animBufferInfo.buffer = animUBuffers.uniformBuffers[i];
+            animBufferInfo.offset = 0;
+            animBufferInfo.range = sizeof(BoneMatricesUniformType);
 
             VkDescriptorImageInfo imageInfo{};
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             imageInfo.imageView = texture.textureImageView;
             imageInfo.sampler = texture.textureSampler;
 
-            std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+            std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
             descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[0].dstSet = descriptorSets[i];
@@ -426,33 +441,25 @@ namespace Minerva
             descriptorWrites[1].descriptorCount = 1;
             descriptorWrites[1].pImageInfo = &imageInfo;
 
-            vkUpdateDescriptorSets(engineDevice.logicalDevice, static_cast<uint32_t>(descriptorWrites.size()),
-             descriptorWrites.data(), 0, nullptr);
-        }
-    }
 
-    //Create buffer for a dynamic reading/writing
-    void Renderer::CreateUniformBuffers()
-    {
-        VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+            descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[2].dstSet = descriptorSets[i];
+            descriptorWrites[2].dstBinding = 2;
+            descriptorWrites[2].dstArrayElement = 0;
+            descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites[2].descriptorCount = 1;
+            descriptorWrites[2].pBufferInfo = &animBufferInfo;
 
-        UBuffers.uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-        UBuffers.uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-        UBuffers.uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
-
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-            UBuffers.uniformBuffers[i], UBuffers.uniformBuffersMemory[i]);
-
-            vkMapMemory(engineDevice.logicalDevice, UBuffers.uniformBuffersMemory[i], 0,
-            bufferSize, 0, &UBuffers.uniformBuffersMapped[i]);
+            vkUpdateDescriptorSets(engineDevice.logicalDevice, 
+            static_cast<uint32_t>(descriptorWrites.size()),
+            descriptorWrites.data(), 0, nullptr);
         }
     }
 
     void Renderer::UpdateUniformBuffer(uint32_t currentImage)
     {
-        engineTransform.Scale(glm::vec3(0.03f));
+        engineTransform.Move(glm::vec3(-4.0f, 0.0f, -0.8f));
+        engineTransform.Scale(glm::vec3(0.03f), engineTransform.ubo.model);
         
         camera.UpdateViewMatrix(engineTransform.ubo.view);
 
@@ -461,7 +468,13 @@ namespace Minerva
 
         engineTransform.ubo.proj[1][1] *= -1;
 
-        memcpy(UBuffers.uniformBuffersMapped[currentImage], &engineTransform.ubo, sizeof(engineTransform.ubo));
+        memcpy(animUBuffers.uniformBuffersMapped[currentImage], 
+        &UNBoneMatrices, sizeof(UNBoneMatrices));
+        
+        memcpy(transformationUBuffers.uniformBuffersMapped[currentImage], 
+        &engineTransform.ubo, sizeof(engineTransform.ubo));
+
+        
     }
 
     VkCommandBuffer Renderer::BeginSingleTimeCommands()
@@ -719,8 +732,10 @@ namespace Minerva
         vkDestroyRenderPass(engineDevice.logicalDevice, renderPass, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroyBuffer(engineDevice.logicalDevice, UBuffers.uniformBuffers[i], nullptr);
-            vkFreeMemory(engineDevice.logicalDevice, UBuffers.uniformBuffersMemory[i], nullptr);
+            vkDestroyBuffer(engineDevice.logicalDevice, transformationUBuffers.uniformBuffers[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, transformationUBuffers.uniformBuffersMemory[i], nullptr);
+            vkDestroyBuffer(engineDevice.logicalDevice, animUBuffers.uniformBuffers[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, animUBuffers.uniformBuffersMemory[i], nullptr);
         }
         vkDestroyDescriptorPool(engineDevice.logicalDevice, descriptorPool, nullptr);
         vkDestroyDescriptorSetLayout(engineDevice.logicalDevice, descriptorSetLayout, nullptr);
@@ -738,9 +753,9 @@ namespace Minerva
         descriptorSetLayout = std::move(other.descriptorSetLayout);
         framebufferResized = std::move(other.framebufferResized);
         descriptorPool = std::move(other.descriptorPool);
-        UBuffers.uniformBuffers = std::move(other.UBuffers.uniformBuffers);
-        UBuffers.uniformBuffersMemory = std::move(other.UBuffers.uniformBuffersMemory);
-        UBuffers.uniformBuffersMapped = std::move(other.UBuffers.uniformBuffersMapped);
+        transformationUBuffers.uniformBuffers = std::move(other.transformationUBuffers.uniformBuffers);
+        transformationUBuffers.uniformBuffersMemory = std::move(other.transformationUBuffers.uniformBuffersMemory);
+        transformationUBuffers.uniformBuffersMapped = std::move(other.transformationUBuffers.uniformBuffersMapped);
         depthImage = std::move(other.depthImage);
         depthImageMemory = std::move(other.depthImageMemory);
         depthImageView = std::move(other.depthImageView);
@@ -764,8 +779,8 @@ namespace Minerva
 
         for (size_t i = 0; i < other.MAX_FRAMES_IN_FLIGHT; i++) 
         {
-            vkDestroyBuffer(engineDevice.logicalDevice, other.UBuffers.uniformBuffers[i], nullptr);
-            vkFreeMemory(engineDevice.logicalDevice, other.UBuffers.uniformBuffersMemory[i], nullptr);
+            vkDestroyBuffer(engineDevice.logicalDevice, other.transformationUBuffers.uniformBuffers[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, other.transformationUBuffers.uniformBuffersMemory[i], nullptr);
         }
 
         vkDestroyImageView(engineDevice.logicalDevice, other.depthImageView, nullptr);
@@ -786,9 +801,9 @@ namespace Minerva
         descriptorSetLayout = std::move(other.descriptorSetLayout);
         framebufferResized = std::move(other.framebufferResized);
         descriptorPool = std::move(other.descriptorPool);
-        UBuffers.uniformBuffers = std::move(other.UBuffers.uniformBuffers);
-        UBuffers.uniformBuffersMemory = std::move(other.UBuffers.uniformBuffersMemory);
-        UBuffers.uniformBuffersMapped = std::move(other.UBuffers.uniformBuffersMapped);
+        transformationUBuffers.uniformBuffers = std::move(other.transformationUBuffers.uniformBuffers);
+        transformationUBuffers.uniformBuffersMemory = std::move(other.transformationUBuffers.uniformBuffersMemory);
+        transformationUBuffers.uniformBuffersMapped = std::move(other.transformationUBuffers.uniformBuffersMapped);
         depthImage = std::move(other.depthImage);
         depthImageMemory = std::move(other.depthImageMemory);
         depthImageView = std::move(other.depthImageView);
@@ -812,8 +827,8 @@ namespace Minerva
 
         for (size_t i = 0; i < other.MAX_FRAMES_IN_FLIGHT; i++) 
         {
-            vkDestroyBuffer(engineDevice.logicalDevice, other.UBuffers.uniformBuffers[i], nullptr);
-            vkFreeMemory(engineDevice.logicalDevice, other.UBuffers.uniformBuffersMemory[i], nullptr);
+            vkDestroyBuffer(engineDevice.logicalDevice, other.transformationUBuffers.uniformBuffers[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, other.transformationUBuffers.uniformBuffersMemory[i], nullptr);
         }
 
         vkDestroyImageView(engineDevice.logicalDevice, other.depthImageView, nullptr);

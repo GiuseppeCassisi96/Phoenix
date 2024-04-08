@@ -1,19 +1,16 @@
 #pragma once
-#include "imgui.h"
-#include "imconfig.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
 #include "VulkanInstance.h"
 #include "DebugManager.h"
 #include "Window.h"
 #include "Device.h"
 #include "EnginePipeline.h"
 #include "Renderer.h"
-#include "Mesh.h"
 #include "TextureManager.h"
 #include "EngineCamera.h"
 #include "MinervaUI.h"
 #include "ModelLoader.h"
+
+
 namespace Minerva
 {
     extern VulkanInstance engineInstance;

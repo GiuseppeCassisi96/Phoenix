@@ -1,5 +1,4 @@
 #pragma once
-#include <glm/glm.hpp>
 #include <array>
 #include "vector"
 #include "vulkan/vulkan.h"
@@ -8,11 +7,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/hash.hpp>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#define MAX_BONE_PER_VERTEX 2
+#define MAX_BONES 100
 
 namespace Minerva
 {
@@ -21,97 +17,95 @@ namespace Minerva
         glm::vec3 instancePos;
         float instanceScale;
     };
-    struct Vertex 
-    {
-        glm::vec3 offsetPos;
-        float offsetScale;
-        glm::vec3 pos;
-        glm::vec3 color;
-        glm::vec2 texCoord;
-        
-
-        bool operator==(const Vertex& other) const {
-            return pos == other.pos && color == other.color && texCoord == other.texCoord;
-        }
-
-        static  std::array<VkVertexInputBindingDescription, 2> getBindingDescription() 
-        {
-            std::array<VkVertexInputBindingDescription, 2> bindingDescriptions;
-            bindingDescriptions[0].binding = 0;
-            bindingDescriptions[0].stride = sizeof(Vertex);
-            bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-            bindingDescriptions[1].binding = 1;
-            bindingDescriptions[1].stride = sizeof(InstanceData);
-            bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-            return bindingDescriptions;
-        }
-
-        static std::array<VkVertexInputAttributeDescription, 5> getAttributeDescriptions() 
-        {
-            std::array<VkVertexInputAttributeDescription, 5> attributeDescriptions{};
-            //Position
-            attributeDescriptions[0].binding = 0;
-            attributeDescriptions[0].location = 0;
-            attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-            //Color
-            attributeDescriptions[1].binding = 0;
-            attributeDescriptions[1].location = 1;
-            attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-            //UV coord
-            attributeDescriptions[2].binding = 0;
-            attributeDescriptions[2].location = 2;
-            attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-            attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
-
-            //Instance pos
-            attributeDescriptions[3].binding = 1;
-            attributeDescriptions[3].location = 3;
-            attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[3].offset = offsetof(Vertex, offsetPos);
-
-            attributeDescriptions[4].binding = 1;
-            attributeDescriptions[4].location = 4;
-            attributeDescriptions[4].format = VK_FORMAT_R32_SFLOAT;
-            attributeDescriptions[4].offset = offsetof(Vertex, offsetScale);
-            return attributeDescriptions;
-        }
-    };
-
-    struct UniformBufferObject {
-        glm::mat4 model;
-        glm::mat4 view;
-        glm::mat4 proj;
-
-    };
-
-
-    class Transformation
-    {
-        public:
-            UniformBufferObject ubo {};
-            void Move(const glm::vec3& dir, glm::mat4 model = glm::mat4(1.0f));
-            void Scale(const glm::vec3& dim, glm::mat4 model = glm::mat4(1.0f));
-            void Rotate(const float& angle, const glm::vec3& axis, glm::mat4 model = glm::mat4(1.0f));
-    };
 
     class Mesh
     {
     public:
+        struct Vertex 
+        {
+            glm::vec3 offsetPos;
+            float offsetScale;
+            glm::vec3 pos;
+            glm::vec3 color;
+            glm::vec2 texCoord;
+            int boneID[MAX_BONE_PER_VERTEX];
+            float weight[MAX_BONE_PER_VERTEX];
+            
 
+            bool operator==(const Vertex& other) const {
+                return pos == other.pos && color == other.color && texCoord == other.texCoord;
+            }
+
+            static  std::array<VkVertexInputBindingDescription, 2> getBindingDescription() 
+            {
+                std::array<VkVertexInputBindingDescription, 2> bindingDescriptions;
+                bindingDescriptions[0].binding = 0;
+                bindingDescriptions[0].stride = sizeof(Vertex);
+                bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+                bindingDescriptions[1].binding = 1;
+                bindingDescriptions[1].stride = sizeof(InstanceData);
+                bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+                return bindingDescriptions;
+            }
+
+            static std::array<VkVertexInputAttributeDescription, 7> getAttributeDescriptions() 
+            {
+                std::array<VkVertexInputAttributeDescription, 7> attributeDescriptions{};
+                //Position
+                attributeDescriptions[0].binding = 0;
+                attributeDescriptions[0].location = 0;
+                attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+                attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+                //Color
+                attributeDescriptions[1].binding = 0;
+                attributeDescriptions[1].location = 1;
+                attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+                attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+                //UV coord
+                attributeDescriptions[2].binding = 0;
+                attributeDescriptions[2].location = 2;
+                attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+                attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+
+                //Instance pos
+                attributeDescriptions[3].binding = 1;
+                attributeDescriptions[3].location = 3;
+                attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+                attributeDescriptions[3].offset = offsetof(Vertex, offsetPos);
+
+                attributeDescriptions[4].binding = 1;
+                attributeDescriptions[4].location = 4;
+                attributeDescriptions[4].format = VK_FORMAT_R32_SFLOAT;
+                attributeDescriptions[4].offset = offsetof(Vertex, offsetScale);
+
+                attributeDescriptions[5].binding = 0;
+                attributeDescriptions[5].location = 5;
+                attributeDescriptions[5].format = VK_FORMAT_R32G32_SINT;
+                attributeDescriptions[5].offset = offsetof(Vertex, boneID);
+
+                attributeDescriptions[6].binding = 0;
+                attributeDescriptions[6].location = 6;
+                attributeDescriptions[6].format = VK_FORMAT_R32G32_SFLOAT;
+                attributeDescriptions[6].offset = offsetof(Vertex, weight);
+                return attributeDescriptions;
+            }
+        };
+        enum MeshType
+        {
+            Static = 0,
+            Skeletal = 1
+        };
         struct InstanceBuffer 
         {
             VkBuffer buffer{ VK_NULL_HANDLE };
             VkDeviceMemory memory{ VK_NULL_HANDLE };
             size_t size = 0;
         } ;
-        std::vector<Vertex> vertices;
-        std::vector<uint32_t> indices;
-        struct MeshBuffer
+
+         struct MeshBuffer
         {
             VkBuffer vertexBuffer = VK_NULL_HANDLE;
             VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
@@ -119,10 +113,18 @@ namespace Minerva
             VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
             size_t size = 0;
         };
+
+        struct BoneInfo
+        {
+            int id;
+            glm::mat4 offset;
+        };
+        std::vector<Vertex> vertices;
+        std::vector<uint32_t> indices;
         MeshBuffer meshBuffer;
+        MeshType typeOfMesh;
 
         Mesh() = default;
-        Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices); 
         ~Mesh();
 
         Mesh(const Mesh&) = delete;
@@ -137,12 +139,3 @@ namespace Minerva
 }
 
 
-namespace std {
-    template<> struct hash<Minerva::Vertex> {
-        size_t operator()(Minerva::Vertex const& vertex) const {
-            return ((hash<glm::vec3>()(vertex.pos) ^
-                   (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-                   (hash<glm::vec2>()(vertex.texCoord) << 1);
-        }
-    };
-}

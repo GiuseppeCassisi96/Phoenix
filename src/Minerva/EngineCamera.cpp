@@ -2,6 +2,19 @@
 #include <chrono>
 namespace Minerva
 {
+    void Transformation::Move(const glm::vec3 &dir, glm::mat4 model)
+    {
+        ubo.model = glm::translate(model, dir);
+    }
+    void Transformation::Scale(const glm::vec3& dim, glm::mat4 model)
+    {
+        ubo.model = glm::scale(model, dim);
+    }
+    void Transformation::Rotate(const float& angle, const glm::vec3& axis, glm::mat4 model)
+    {
+        ubo.model = glm::rotate(model, glm::radians(angle), axis);
+    }
+
     void EngineCamera::SetupViewMatrix(glm::mat4 &viewMatrix)
     {
         cameraPos = glm::vec3(0.0f, 3.0f, 0.0f);

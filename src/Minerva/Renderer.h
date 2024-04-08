@@ -3,8 +3,20 @@
 #include "vector"
 #include "Mesh.h"
 
+
 namespace Minerva
 {
+    struct UniformBuffers
+    {
+        std::vector<VkBuffer> uniformBuffers;
+        std::vector<VkDeviceMemory> uniformBuffersMemory;
+        std::vector<void*> uniformBuffersMapped;
+    };
+
+    struct BoneMatricesUniformType
+    {
+        glm::mat4 finalBoneMatrices[MAX_BONES];
+    };
     class Renderer
     {
     public:
@@ -20,7 +32,9 @@ namespace Minerva
         bool framebufferResized = false;
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
         const int MAX_FRAMES_IN_FLIGHT = 2;
-
+        UniformBuffers transformationUBuffers; 
+        UniformBuffers animUBuffers; 
+        BoneMatricesUniformType UNBoneMatrices;
 
         void CreateRenderPass();
         void CreateFramebuffers();
@@ -39,7 +53,6 @@ namespace Minerva
         void CreateDescriptorSetLayout();
         void CreateDescriptorPool();
         void CreateDescriptorSets();
-        void CreateUniformBuffers();
         void UpdateUniformBuffer(uint32_t currentImage);
         VkCommandBuffer BeginSingleTimeCommands();
         void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
@@ -63,13 +76,8 @@ namespace Minerva
 
     private:
 
-        struct UniformBuffers
-        {
-            std::vector<VkBuffer> uniformBuffers;
-            std::vector<VkDeviceMemory> uniformBuffersMemory;
-            std::vector<void*> uniformBuffersMapped;
-        };
-        UniformBuffers UBuffers;   
+        
+          
         VkImage depthImage;
         VkDeviceMemory depthImageMemory;
         VkImageView depthImageView;

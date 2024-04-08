@@ -1,29 +1,11 @@
 #include "Mesh.h"
 #include "EngineVars.h"
-#include <unordered_map>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
-#include <iostream>
 
 namespace Minerva
 {
-
-    void Transformation::Move(const glm::vec3 &dir, glm::mat4 model)
-    {
-        ubo.model = glm::translate(model, dir);
-    }
-    void Transformation::Scale(const glm::vec3& dim, glm::mat4 model)
-    {
-        ubo.model = glm::scale(model, dim);
-    }
-    void Transformation::Rotate(const float& angle, const glm::vec3& axis, glm::mat4 model)
-    {
-        ubo.model = glm::rotate(model, glm::radians(angle), axis);
-    }
-    
-
-    Mesh::Mesh(std::vector<Vertex> inputVertices, std::vector<uint32_t> inputIndices): vertices(inputVertices), 
-    indices(inputIndices)
-    {}
 
     Mesh::~Mesh()
     {
@@ -71,6 +53,15 @@ namespace Minerva
         vkFreeMemory(engineDevice.logicalDevice, other.meshBuffer.vertexBufferMemory, nullptr);
 
         return *this;
-        // TODO: inserire l'istruzione return qui
     }
+}
+
+namespace std {
+    template<> struct hash<Minerva::Mesh::Vertex> {
+        size_t operator()(Minerva::Mesh::Vertex const& vertex) const {
+            return ((hash<glm::vec3>()(vertex.pos) ^
+                   (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+                   (hash<glm::vec2>()(vertex.texCoord) << 1);
+        }
+    };
 }

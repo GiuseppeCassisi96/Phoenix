@@ -317,6 +317,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\AnimationManager.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Bone.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\DebugManager.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Device.cpp" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\EngineCamera.cpp" />

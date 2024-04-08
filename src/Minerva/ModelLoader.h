@@ -1,10 +1,20 @@
+
 #pragma once
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <map>
 #include "Mesh.h"
 namespace Minerva
 {
+    struct SampleType
+    {
+        std::string textureName;
+        std::string modelName;
+        std::string animName;
+        float scale;
+        int rowDim;
+    };
     class ModelLoader
     {
     public:
@@ -12,10 +22,15 @@ namespace Minerva
         std::vector<InstanceData> instancesData;
         Mesh::InstanceBuffer instanceBuffer;
         std::vector<Mesh> sceneMeshes;
+        std::map<std::string, Mesh::BoneInfo> infoBoneMap;
+        int boneNumber = 0;
         void LoadModel(std::string fileName);
         void ProcessAssimpNode(aiNode *node, const aiScene *scene);
         Mesh ProcessAssimpMesh(aiMesh *mesh, const aiScene *scene);
-        void PrepareInstanceData();
+        void PrepareInstanceData(SampleType type);
+        void SetupBoneData(Minerva::Mesh::Vertex& currentVertex, int boneID = -1, float weight = 0.0f);
+        void ExtractBoneWeightForVertices(std::vector<Mesh::Vertex>& vertices, aiMesh* mesh, const aiScene* scene);
+        static glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4&from);
         ModelLoader() = default;
         ~ModelLoader();
         

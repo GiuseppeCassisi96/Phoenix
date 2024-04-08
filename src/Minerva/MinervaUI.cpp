@@ -1,5 +1,6 @@
-#include "MinervaUI.h"
 #include "EngineVars.h"
+#include "MinervaUI.h"
+
 #include <stdexcept>
 
 namespace Minerva

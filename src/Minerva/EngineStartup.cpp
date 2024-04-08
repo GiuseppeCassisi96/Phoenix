@@ -1,10 +1,11 @@
 #include "EngineStartup.h"
-#include "EngineVars.h"
+
 #include <iostream>
 #include "imgui.h"
 #include "imconfig.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
+
 
 namespace Minerva
 {
@@ -20,6 +21,27 @@ namespace Minerva
     MinervaUI engineUI;
     ModelLoader engineModLoader;
 
+
+
+    template<typename T>
+    void CreateUniformBuffers(UniformBuffers& UNBuffers)
+    {
+        VkDeviceSize bufferSize = sizeof(T);
+
+        UNBuffers.uniformBuffers.resize(engineRenderer.MAX_FRAMES_IN_FLIGHT);
+        UNBuffers.uniformBuffersMemory.resize(engineRenderer.MAX_FRAMES_IN_FLIGHT);
+        UNBuffers.uniformBuffersMapped.resize(engineRenderer.MAX_FRAMES_IN_FLIGHT);
+
+        for (size_t i = 0; i < engineRenderer.MAX_FRAMES_IN_FLIGHT; i++) {
+            engineRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+            UNBuffers.uniformBuffers[i], UNBuffers.uniformBuffersMemory[i]);
+
+            vkMapMemory(engineDevice.logicalDevice, UNBuffers.uniformBuffersMemory[i], 0,
+            bufferSize, 0, &UNBuffers.uniformBuffersMapped[i]);
+        }
+    }
+
     void EngineStartup::RunEngine()
     {
         std::cout << "                                          -----------------MINERVA ENGINE-----------------\n\n";
@@ -30,6 +52,29 @@ namespace Minerva
 
     void EngineStartup::Start()
     {
+        samplesTest["0"].animName = "";
+        samplesTest["0"].modelName = "SteamHammer.obj";
+        samplesTest["0"].textureName = "SteamHammerColor.png";
+        samplesTest["0"].scale = 10.0f;
+        samplesTest["0"].rowDim = 20;
+
+        samplesTest["1"].animName = "guard.fbx";
+        samplesTest["1"].modelName = "guard.fbx";
+        samplesTest["1"].textureName = "guardColor.png";
+        samplesTest["1"].scale = 0.2f;
+        samplesTest["1"].rowDim = 150;
+
+        std::string key;
+
+        std::cout << "Choose the model which you want rendered: \n"
+        << "Insert '0' to render the static model\n"
+        << "Insert '1' to render the skeletal model\n";
+        std::cin >> key;
+        std::cout << "Select the instance number: ";
+        std::cin >> engineModLoader.instanceNumber;
+
+        SampleType choosenSample = samplesTest[key];
+
         windowInstance.EngineInitWindow(windowInstance.WIDTH, windowInstance.HEIGHT);
         engineInstance.CreateInstance();
         debugLayer.SetupDebugMessenger(engineInstance.instance);
@@ -45,16 +90,24 @@ namespace Minerva
         engineRenderer.CreateCommandPool();
         engineRenderer.CreateDepthResources();
         engineRenderer.CreateFramebuffers();
-        texture.CreateTextureImage("SteamHammerColor.png");
+        texture.CreateTextureImage(choosenSample.textureName);
         texture.CreateTextureImageView();
         texture.CreateTextureSampler();
-        engineModLoader.LoadModel("SteamHammer.obj");
         
-        engineModLoader.PrepareInstanceData();
+        engineModLoader.LoadModel(choosenSample.modelName);
+        if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
+        {
+            anim.CreateAnimation("C:/UNIMI/TESI/Phoenix/src/Minerva/Models/" + choosenSample.animName, &engineModLoader);
+            animator.CreateAnimator(&anim);
+        }
+            
+
+        engineModLoader.PrepareInstanceData(choosenSample);
         engineRenderer.CreateVertexBuffer();
         engineRenderer.CreateInstanceBuffer();
         engineRenderer.CreateIndexBuffer();
-        engineRenderer.CreateUniformBuffers();
+        CreateUniformBuffers<UniformBufferObject>(engineRenderer.transformationUBuffers);
+        CreateUniformBuffers<BoneMatricesUniformType>(engineRenderer.animUBuffers);
         engineRenderer.CreateDescriptorPool();
         engineRenderer.CreateDescriptorSets();
         engineRenderer.CreateCommandBuffer();
@@ -77,13 +130,19 @@ namespace Minerva
     }
     void EngineStartup::Loop()
     {
+        
         while (!glfwWindowShouldClose(windowInstance.window)) {
             
             glfwPollEvents();
+            if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
+                animator.UpdateAnimation(camera.deltaTime);
             camera.ProcessUserInput(windowInstance.window);
             engineRenderer.DrawFrame();
+            
             
         }
         vkDeviceWaitIdle(engineDevice.logicalDevice);
     }
+
+    
 }

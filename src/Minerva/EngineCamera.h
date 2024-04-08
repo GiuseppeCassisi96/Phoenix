@@ -5,6 +5,21 @@
 
 namespace Minerva
 {
+    struct UniformBufferObject 
+    {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+    };
+    class Transformation
+    {
+        public:
+            UniformBufferObject ubo {};
+            void Move(const glm::vec3& dir, glm::mat4 model = glm::mat4(1.0f));
+            void Scale(const glm::vec3& dim, glm::mat4 model = glm::mat4(1.0f));
+            void Rotate(const float& angle, const glm::vec3& axis, glm::mat4 model = glm::mat4(1.0f));
+    };
+
     class EngineCamera
     {
     public:
