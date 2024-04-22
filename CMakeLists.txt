@@ -1,16 +1,15 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5.0)
 project(Phoenix VERSION 0.1.0 LANGUAGES C CXX)
+set (CMAKE_CXX_STANDARD 20)
 
-#include(CTest)
-#enable_testing()
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE MINERVA_SRC ${PROJECT_SOURCE_DIR}/src/Minerva/{*.cpp, *.h})
 
 
-add_executable(Phoenix src/PhoenixApp.cpp)
-
-#set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-#set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-#include(CPack)
 include(envPhoenix.cmake)
+add_executable(${PROJECT_NAME} ${SOURCES} ${MINERVA_SRC} ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp ${IMGUI_PATH}/backends/imgui_impl_vulkan.cpp
+ ${IMGUI_PATH}/imgui.cpp ${IMGUI_PATH}/imgui_draw.cpp ${IMGUI_PATH}/imgui_demo.cpp ${IMGUI_PATH}/imgui_tables.cpp
+ ${IMGUI_PATH}/imgui_widgets.cpp)
 
 #Here I set the compiler. I will use g++ compiler for .cpp files 
 message(STATUS "using ${CMAKE_GENERATOR}")
@@ -93,12 +92,23 @@ if(DEFINED TINY_OBJ_PATH)
 
 endif()
 
-#If the tiny_obj path isn't defined I throw an error 
-if (NOT TINY_OBJ_FOUND)
-    message(FATAL_ERROR "Could not find tiny_obj library!")
-else()
-    message(STATUS "Using tiny_obj include at: ${TINY_OBJ_INCLUDE_DIRS}")
+#Here I set the Vulkan environment. I set the include and lib path
+if(DEFINED ASSIMP_PATH)
+    set(ASSIMP_INCLUDE_DIRS "${ASSIMP_PATH}/include") 
+    set(ASSIMP_LIBRARIES "${ASSIMP_PATH}/lib/x64") 
+    set(ASSIMP_FOUND "True")
+
 endif()
+
+#If the Vulkan path isn't defined I throw an error 
+if (NOT ASSIMP_FOUND)
+    message(FATAL_ERROR "Could not find Vulkan library!")
+else()
+    message(STATUS "Using Assimp include at: ${ASSIMP_INCLUDE_DIRS}")
+    message(STATUS "Using Assimp lib at: ${ASSIMP_LIBRARIES}")
+endif()
+
+include_directories(${IMGUI_PATH} ${IMGUI_PATH}/backends)
 
 if(WIN32)
     if (USE_MINGW)
@@ -116,13 +126,17 @@ if(WIN32)
         ${GLFW_INCLUDE_DIRS}
         ${GLM_PATH}
         ${STB_INCLUDE_DIRS}
-        ${TINY_OBJ_INCLUDE_DIRS}
+        ${ASSIMP_INCLUDE_DIRS}
         )
+        
     
     target_link_directories(${PROJECT_NAME} PUBLIC
         ${VULKAN_LIBRARIES}
         ${GLFW_LIBRARIES}
+        ${ASSIMP_LIBRARIES}
     )
 
-    target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1)
+    target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1 assimp-vc143-mt)
+
+    #execute_process(COMMAND cmd /c C:/UNIMI/TESI/Phoenix/src/Minerva/Shaders/ShaderCompiler.bat)
 endif()

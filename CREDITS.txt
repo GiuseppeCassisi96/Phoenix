@@ -1,0 +1,22 @@
+//The classes Bone, ModelLoader, Animation and Animator are based on:
+
+/***************************************************************************************
+*    Title: Model
+*    Authors: Joey de Vries
+*    Availability: https://learnopengl.com/Model-Loading/Model
+*    Joey de Vries's twitter: https://twitter.com/JoeyDeVriez
+*    Website: https://learnopengl.com
+*    License: CC BY-NC 4.0 DEED https://creativecommons.org/licenses/by-nc/4.0/
+***************************************************************************************/
+
+/***************************************************************************************
+*    Title: Skeletal Animation
+*    Authors: Ankit Singh Kushwah
+*    Date: 2020
+*    Availability: https://learnopengl.com/Guest-Articles/2020/Skeletal-Animation
+*    Website: https://learnopengl.com
+*    License: CC BY-NC 4.0 DEED https://creativecommons.org/licenses/by-nc/4.0/
+***************************************************************************************/
+ 
+
+
