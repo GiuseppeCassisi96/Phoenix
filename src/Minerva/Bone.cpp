@@ -127,6 +127,6 @@ namespace Minerva
         glm::mat4 translation = InterpolatePosition(animationTime);
         glm::mat4 rotation = InterpolateRotation(animationTime);
         glm::mat4 scale = InterpolateScaling(animationTime);
-        localTransform = translation * scale * rotation ;
+        localTransform = translation * rotation * scale;
     }
 }

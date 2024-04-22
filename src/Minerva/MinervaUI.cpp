@@ -83,8 +83,8 @@ namespace Minerva
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / 
             ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::Text("Number of bones: %d", engineModLoader.info.numberOfBones);
-            ImGui::Text("Number of triangles: %d", engineModLoader.info.numberOfPolygons);
-            ImGui::Text("Number of vertices: %d", engineModLoader.info.numberOfVertices);
+            ImGui::Text("Number of triangles: %d", engineModLoader.info.numberOfPolygons  * engineModLoader.instanceNumber);
+            ImGui::Text("Number of vertices: %d", engineModLoader.info.numberOfVertices  * engineModLoader.instanceNumber);
             ImGui::Text("Number of instances: %d", engineModLoader.instanceNumber);
             if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
             {

@@ -7,8 +7,11 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#define MAX_BONE_PER_VERTEX 2
+#define MAX_BONE_PER_VERTEX 4
 #define MAX_BONES 100
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 namespace Minerva
 {
@@ -83,12 +86,12 @@ namespace Minerva
 
                 attributeDescriptions[5].binding = 0;
                 attributeDescriptions[5].location = 5;
-                attributeDescriptions[5].format = VK_FORMAT_R32G32_SINT;
+                attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SINT;
                 attributeDescriptions[5].offset = offsetof(Vertex, boneID);
 
                 attributeDescriptions[6].binding = 0;
                 attributeDescriptions[6].location = 6;
-                attributeDescriptions[6].format = VK_FORMAT_R32G32_SFLOAT;
+                attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
                 attributeDescriptions[6].offset = offsetof(Vertex, weight);
                 return attributeDescriptions;
             }

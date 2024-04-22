@@ -49,15 +49,17 @@ namespace Minerva
         samplesTest["0"].textureName = "SteamHammerColor.png";
         samplesTest["0"].scale = 10.0f;
         samplesTest["0"].rowDim = 20;
+        samplesTest["0"].distanceMultiplier = 30.0f;
 
         samplesTest["1"].animNumber = 3;
-        samplesTest["1"].animName.emplace_back("idle.fbx");
-        samplesTest["1"].animName.emplace_back("walk.fbx");
-        samplesTest["1"].animName.emplace_back("run.fbx");
-        samplesTest["1"].modelName = "guard.fbx";
-        samplesTest["1"].textureName = "guardColor.png";
+        samplesTest["1"].animName.emplace_back("monsterIdle.fbx");
+        samplesTest["1"].animName.emplace_back("monsterWalk.fbx");
+        samplesTest["1"].animName.emplace_back("monsterRun.fbx");
+        samplesTest["1"].modelName = "monster.fbx";
+        samplesTest["1"].textureName = "monsterColor.png";
         samplesTest["1"].scale = 0.2f;
         samplesTest["1"].rowDim = 40;
+        samplesTest["1"].distanceMultiplier = 45.0f;
 
          
         std::string key;

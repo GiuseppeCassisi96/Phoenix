@@ -1,8 +1,5 @@
 
 #pragma once
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #include <map>
 #include "Mesh.h"
 namespace Minerva
@@ -15,6 +12,7 @@ namespace Minerva
         int animNumber;
         float scale;
         int rowDim;
+        float distanceMultiplier;
     };
 
     struct MeshInfo

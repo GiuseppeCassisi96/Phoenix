@@ -5,8 +5,8 @@ layout(location = 1) in vec3 inColor;
 layout(location = 2) in vec2 inTexCoord;
 layout(location = 3) in vec3 inOffsetPos;
 layout(location = 4) in float inOffsetScale;
-layout(location = 5) in ivec2 inBoneID;
-layout(location = 6) in vec2 inWeight;
+layout(location = 5) in ivec4 inBoneID;
+layout(location = 6) in vec4 inWeight;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
@@ -18,7 +18,7 @@ layout(binding = 0) uniform UniformBufferObject {
 } ubo;
 
 const int MAX_BONES = 100;
-const int MAX_BONE_PER_VERTEX = 2;
+const int MAX_BONE_PER_VERTEX = 4;
 
 layout(binding = 2) uniform animBufferObk 
 {
@@ -37,7 +37,7 @@ void main() {
             break;
         }
             
-        if(inBoneID[i] >=MAX_BONES) 
+        if(inBoneID[i] >= MAX_BONES) 
         {
             totalPosition = vec4((inPosition * inOffsetScale) + inOffsetPos,1.0);
             break;

@@ -1,5 +1,5 @@
 #include "ModelLoader.h"
-
+#include <queue>
 #include "EngineVars.h"
 
 
@@ -45,7 +45,6 @@ namespace Minerva
         std::vector<uint32_t> tempIndices;
         Mesh createdMesh;
         
-        
         for(unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
             Minerva::Mesh::Vertex currentVertex;
@@ -54,7 +53,6 @@ namespace Minerva
             currentVertex.pos.x = mesh->mVertices[i].x;
             currentVertex.pos.y = mesh->mVertices[i].y;
             currentVertex.pos.z = mesh->mVertices[i].z;
-
 
             currentVertex.color = glm::vec3 {1.0f};
 
@@ -80,7 +78,7 @@ namespace Minerva
             for(unsigned int j = 0; j < face.mNumIndices; j++)
                 tempIndices.emplace_back(face.mIndices[j]);
         }
-       
+        
         createdMesh.vertices = tempVertices;
         createdMesh.indices = tempIndices;
         if(mesh->mNumBones > 0)
@@ -100,7 +98,7 @@ namespace Minerva
         for(int i = 0; i < instanceNumber; i++)
         {   
             counter++;
-            instancesData[i].instancePos = glm::vec3(counter * 30.0f,-row * 30.0f, 0.0f);
+            instancesData[i].instancePos = glm::vec3(counter * type.distanceMultiplier ,-row * 30.0f, 0.0f);
             if(counter >= type.rowDim)
             {
                 counter = 0;
