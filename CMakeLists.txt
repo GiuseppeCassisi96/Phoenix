@@ -2,17 +2,24 @@ cmake_minimum_required(VERSION 3.5.0)
 project(Phoenix VERSION 0.1.0 LANGUAGES C CXX)
 set (CMAKE_CXX_STANDARD 20)
 
+include(envPhoenix.cmake)
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE MINERVA_SRC ${PROJECT_SOURCE_DIR}/src/Minerva/{*.cpp, *.h})
+file(GLOB_RECURSE PHOENIX_SRC ${PROJECT_SOURCE_DIR}/src/Minerva/Phoenix/{*.cpp, *.h})
 
 
-include(envPhoenix.cmake)
-add_executable(${PROJECT_NAME} ${SOURCES} ${MINERVA_SRC} ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp ${IMGUI_PATH}/backends/imgui_impl_vulkan.cpp
- ${IMGUI_PATH}/imgui.cpp ${IMGUI_PATH}/imgui_draw.cpp ${IMGUI_PATH}/imgui_demo.cpp ${IMGUI_PATH}/imgui_tables.cpp
- ${IMGUI_PATH}/imgui_widgets.cpp)
+
+add_executable(${PROJECT_NAME} ${SOURCES} ${MINERVA_SRC} ${PHOENIX_SRC} 
+${IMGUI_PATH}/backends/imgui_impl_glfw.cpp ${IMGUI_PATH}/backends/imgui_impl_vulkan.cpp
+ ${IMGUI_PATH}/imgui.cpp ${IMGUI_PATH}/imgui_draw.cpp ${IMGUI_PATH}/imgui_demo.cpp 
+ ${IMGUI_PATH}/imgui_tables.cpp
+ ${IMGUI_PATH}/imgui_widgets.cpp 
+ ${MESHOPTIMIZER_PATH}/simplifier.cpp
+ ${MESHOPTIMIZER_PATH}/meshoptimizer.h
+ ${MESHOPTIMIZER_PATH}/clusterizer.cpp)
 
 #Here I set the compiler. I will use g++ compiler for .cpp files 
-message(STATUS "using ${CMAKE_GENERATOR}")
+message(STATUS "Using ${CMAKE_GENERATOR}")
 if (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
     if (NOT MINGW_PATH) 
       message(FATAL_ERROR "MINGW_PATH not set in .env.cmake")
@@ -28,7 +35,6 @@ if(DEFINED VULKAN_PATH)
     set(VULKAN_INCLUDE_DIRS "${VULKAN_PATH}/Include") 
     set(VULKAN_LIBRARIES "${VULKAN_PATH}/Lib") 
     set(VULKAN_FOUND "True")
-
 endif()
 
 #If the Vulkan path isn't defined I throw an error 
@@ -108,6 +114,12 @@ else()
     message(STATUS "Using Assimp lib at: ${ASSIMP_LIBRARIES}")
 endif()
 
+if(DEFINED MESHOPTIMIZER_PATH)
+    message(STATUS "Using Meshoptimizer at: ${MESHOPTIMIZER_PATH}")
+else()
+    message(FATAL_ERROR "Could not find Meshoptimizer library!")
+endif()
+
 include_directories(${IMGUI_PATH} ${IMGUI_PATH}/backends)
 
 if(WIN32)
@@ -137,6 +149,4 @@ if(WIN32)
     )
 
     target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1 assimp-vc143-mt)
-
-    #execute_process(COMMAND cmd /c C:/UNIMI/TESI/Phoenix/src/Minerva/Shaders/ShaderCompiler.bat)
 endif()

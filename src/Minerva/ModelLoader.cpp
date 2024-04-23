@@ -54,7 +54,7 @@ namespace Minerva
             currentVertex.pos.y = mesh->mVertices[i].y;
             currentVertex.pos.z = mesh->mVertices[i].z;
 
-            currentVertex.color = glm::vec3 {1.0f};
+            currentVertex.color = glm::vec3 {0.2f};
 
             //UVCoord loading
             if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?

@@ -1,5 +1,6 @@
 #include "EngineStartup.h"
 #include <iostream>
+#include "Phoenix/PhoenixMesh.h"
 
 
 namespace Minerva
@@ -93,6 +94,7 @@ namespace Minerva
         texture.CreateTextureSampler();
         
         engineModLoader.LoadModel(choosenSample.modelName);
+
         if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
         {
             
@@ -105,7 +107,11 @@ namespace Minerva
             }
             animator.CreateAnimator(&animations[0]);
         }
-            
+        Phoenix::PhoenixMesh phoenixMesh;
+        phoenixMesh.SimplifyMeshlet(engineModLoader.sceneMeshes[0].vertices, 
+        engineModLoader.sceneMeshes[0].indices);    
+        phoenixMesh.MeshletGeneration(engineModLoader.sceneMeshes[0].vertices, 
+        engineModLoader.sceneMeshes[0].indices);
 
         engineModLoader.PrepareInstanceData(choosenSample);
         engineRenderer.CreateVertexBuffer();

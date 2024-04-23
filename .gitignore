@@ -107,4 +107,8 @@ bin/*
 test/test_runner
 
 #API
-Dependencies/*
+Dependencies/Assimp/*
+Dependencies/GLFW/*
+Dependencies/Vulkan/*
+Dependencies/glm/*
+Dependencies/ImGui/*
