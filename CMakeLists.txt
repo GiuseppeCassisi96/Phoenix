@@ -16,7 +16,7 @@ ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp ${IMGUI_PATH}/backends/imgui_impl_vul
  ${IMGUI_PATH}/imgui_widgets.cpp 
  ${MESHOPTIMIZER_PATH}/simplifier.cpp
  ${MESHOPTIMIZER_PATH}/meshoptimizer.h
- ${MESHOPTIMIZER_PATH}/clusterizer.cpp)
+ ${MESHOPTIMIZER_PATH}/clusterizer.cpp) 
 
 #Here I set the compiler. I will use g++ compiler for .cpp files 
 message(STATUS "Using ${CMAKE_GENERATOR}")
@@ -91,14 +91,7 @@ else()
 endif()
 
 
-#Here I set the tiny_obj environment. I set the include path
-if(DEFINED TINY_OBJ_PATH)
-    set(TINY_OBJ_INCLUDE_DIRS "${TINY_OBJ_PATH}") 
-    set(TINY_OBJ_FOUND "True")
-
-endif()
-
-#Here I set the Vulkan environment. I set the include and lib path
+#Here I set the Assimp environment. I set the include and lib path
 if(DEFINED ASSIMP_PATH)
     set(ASSIMP_INCLUDE_DIRS "${ASSIMP_PATH}/include") 
     set(ASSIMP_LIBRARIES "${ASSIMP_PATH}/lib/x64") 
@@ -106,7 +99,7 @@ if(DEFINED ASSIMP_PATH)
 
 endif()
 
-#If the Vulkan path isn't defined I throw an error 
+#If the Assimp path isn't defined I throw an error 
 if (NOT ASSIMP_FOUND)
     message(FATAL_ERROR "Could not find Vulkan library!")
 else()
@@ -119,6 +112,23 @@ if(DEFINED MESHOPTIMIZER_PATH)
 else()
     message(FATAL_ERROR "Could not find Meshoptimizer library!")
 endif()
+
+
+#Here I set the Vulkan environment. I set the include and lib path
+if(DEFINED METIS_PATH)
+    set(METIS_INCLUDE_DIRS "${METIS_PATH}/include") 
+    set(METIS_LIBRARIES "${METIS_PATH}/lib") 
+    set(METIS_FOUND "True")
+endif()
+
+#If the Vulkan path isn't defined I throw an error 
+if (NOT METIS_FOUND)
+    message(FATAL_ERROR "Could not find Vulkan library!")
+else()
+    message(STATUS "Using Metis include at: ${METIS_INCLUDE_DIRS}")
+    message(STATUS "Using Metis lib at: ${METIS_LIBRARIES}")
+endif()
+
 
 include_directories(${IMGUI_PATH} ${IMGUI_PATH}/backends)
 
@@ -139,6 +149,7 @@ if(WIN32)
         ${GLM_PATH}
         ${STB_INCLUDE_DIRS}
         ${ASSIMP_INCLUDE_DIRS}
+        ${METIS_INCLUDE_DIRS}
         )
         
     
@@ -146,7 +157,8 @@ if(WIN32)
         ${VULKAN_LIBRARIES}
         ${GLFW_LIBRARIES}
         ${ASSIMP_LIBRARIES}
+        ${METIS_LIBRARIES}
     )
 
-    target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1 assimp-vc143-mt)
+    target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1 assimp-vc143-mt metis)
 endif()

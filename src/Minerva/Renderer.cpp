@@ -166,10 +166,12 @@ namespace Minerva
             vkCmdBindIndexBuffer(commandBuffer, mesh->meshBuffer.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
             enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            
-            
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->indices.size()), 
-            engineModLoader.instanceNumber, 0, 0, 0);
+
+            for (auto j = 0; j < indirectCommands.size(); j++)
+            {
+                vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, j * 
+                sizeof(VkDrawIndexedIndirectCommand), 1, sizeof(VkDrawIndexedIndirectCommand));
+            }
 
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
@@ -624,6 +626,41 @@ namespace Minerva
         );
     }
 
+    void Renderer::PrepareIndirectData(Phoenix::LOD& lod)
+    {
+        int amountForEachMesh = 0;
+        for(int i = 0; i < 1; i++)
+        {
+            VkDrawIndexedIndirectCommand indirectCmd{};
+            indirectCmd.firstIndex = 0;
+            indirectCmd.indexCount = lod.lodIndexBuffer.size();
+            indirectCmd.firstInstance = 0;
+            indirectCmd.instanceCount = engineModLoader.instanceNumber;
+            indirectCommands.emplace_back(indirectCmd);
+        }
+
+        //Buffer creation
+        VkDeviceSize bufferSize = indirectCommands.size() * sizeof(VkDrawIndexedIndirectCommand);
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+        | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+        void* data;
+        vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+            memcpy(data, indirectCommands.data(), (size_t) bufferSize);
+        vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
+
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indirectCommandsBuffer.buffer, 
+        indirectCommandsBuffer.memory);
+        CopyBuffer(stagingBuffer, indirectCommandsBuffer.buffer, bufferSize);
+
+        //destroy the staging buffer
+        vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, stagingBufferMemory, nullptr);
+    }
+
     bool Renderer::HasStencilComponent(VkFormat format)
     {
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
@@ -739,6 +776,8 @@ namespace Minerva
         }
         vkDestroyDescriptorPool(engineDevice.logicalDevice, descriptorPool, nullptr);
         vkDestroyDescriptorSetLayout(engineDevice.logicalDevice, descriptorSetLayout, nullptr);
+        vkDestroyBuffer(engineDevice.logicalDevice, indirectCommandsBuffer.buffer, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, indirectCommandsBuffer.memory, nullptr);
     }
     Renderer::Renderer(Renderer &&other) noexcept
     {
