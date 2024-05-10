@@ -109,6 +109,7 @@ test/test_runner
 #API
 Dependencies/Assimp/*
 Dependencies/GLFW/*
-Dependencies/Vulkan/*
 Dependencies/glm/*
 Dependencies/ImGui/*
+Dependencies/Meshoptimizer/*
+Dependencies/Vulkan/*

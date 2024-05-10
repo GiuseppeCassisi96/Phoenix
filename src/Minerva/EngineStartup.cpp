@@ -1,6 +1,8 @@
 #include "EngineStartup.h"
 #include <iostream>
 #include "Phoenix/PhoenixMesh.h"
+#include <chrono>
+#include <algorithm>
 
 
 namespace Minerva
@@ -46,9 +48,9 @@ namespace Minerva
 
     void EngineStartup::Start()
     {
-        samplesTest["0"].modelName = "SteamHammer.obj";
-        samplesTest["0"].textureName = "SteamHammerColor.png";
-        samplesTest["0"].scale = 10.0f;
+        samplesTest["0"].modelName = "statue.obj";
+        samplesTest["0"].textureName = "statueColor.jpg";
+        samplesTest["0"].scale = 1.0f;
         samplesTest["0"].rowDim = 20;
         samplesTest["0"].distanceMultiplier = 30.0f;
 
@@ -64,13 +66,18 @@ namespace Minerva
 
          
         std::string key;
+        int lodSelected = 0;
 
         std::cout << "Choose the model which you want rendered: \n"
         << "Insert '0' to render the static model\n"
         << "Insert '1' to render the skeletal model\n";
         std::cin >> key;
+        assert(key == "1" || key == "0");
         std::cout << "Select the instance number: ";
         std::cin >> engineModLoader.instanceNumber;
+        std::cout << "Select the LOD between 0 and 5: ";
+        assert(lodSelected >= 0 && lodSelected <= 5);
+        std::cin >> lodSelected;
 
         SampleType choosenSample = samplesTest[key];
 
@@ -107,12 +114,20 @@ namespace Minerva
             }
             animator.CreateAnimator(&animations[0]);
         }
-        Phoenix::PhoenixMesh phoenixMesh;
-        phoenixMesh.SimplifyMeshlet(engineModLoader.sceneMeshes[0].vertices, 
-        engineModLoader.sceneMeshes[0].indices);    
-        phoenixMesh.MeshletGeneration(engineModLoader.sceneMeshes[0].vertices, 
+        Phoenix::PhoenixMesh phoenixMesh; 
+        auto startTime = std::chrono::high_resolution_clock::now();
+        phoenixMesh.BuildLodsHierarchy(engineModLoader.sceneMeshes[0].vertices, 
         engineModLoader.sceneMeshes[0].indices);
-
+        auto endTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> amount = endTime - startTime;
+        std::cout << "S: " << amount << "\n";
+        
+        engineModLoader.sceneMeshes[0].indices = phoenixMesh.lods[lodSelected].lodIndexBuffer;
+        for(auto group : phoenixMesh.lods[lodSelected].groups)
+        {
+            phoenixMesh.ColourMeshelets(group,engineModLoader.sceneMeshes[0].vertices);
+        }
+        engineRenderer.PrepareIndirectData(phoenixMesh.lods[lodSelected]);
         engineModLoader.PrepareInstanceData(choosenSample);
         engineRenderer.CreateVertexBuffer();
         engineRenderer.CreateInstanceBuffer();

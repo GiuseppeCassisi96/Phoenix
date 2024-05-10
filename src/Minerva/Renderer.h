@@ -2,6 +2,7 @@
 #include "vulkan/vulkan.h"
 #include "vector"
 #include "Mesh.h"
+#include "Phoenix/PhoenixMesh.h"
 
 
 namespace Minerva
@@ -20,6 +21,15 @@ namespace Minerva
     class Renderer
     {
     public:
+
+        struct IndirectCommandsBuffer
+        {
+            VkBuffer buffer{ VK_NULL_HANDLE };
+            VkDeviceMemory memory{ VK_NULL_HANDLE };
+        };
+
+        IndirectCommandsBuffer indirectCommandsBuffer;
+        std::vector<VkDrawIndexedIndirectCommand> indirectCommands;
         uint32_t currentFrame = 0;
         VkRenderPass renderPass;
         std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -62,6 +72,7 @@ namespace Minerva
         VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, 
         VkImageTiling tiling, VkFormatFeatureFlags features);
         VkFormat FindDepthFormat();
+        void PrepareIndirectData(Phoenix::LOD& lod);
         bool HasStencilComponent(VkFormat format);
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
