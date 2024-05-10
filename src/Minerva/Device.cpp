@@ -30,6 +30,7 @@ namespace Minerva
         if (devicesByScore.rbegin()->first > 0)
         {
             physicalDevice = devicesByScore.rbegin()->second;
+            msaaSamples = GetMaxUsableSample();
         }
         else
         {
@@ -63,7 +64,6 @@ namespace Minerva
         int score = 0;
         VkPhysicalDeviceProperties deviceProperties;
         vkGetPhysicalDeviceProperties(currentDevice, &deviceProperties);
-        VkPhysicalDeviceFeatures deviceFeatures;
         vkGetPhysicalDeviceFeatures(currentDevice, &deviceFeatures);
        
 
@@ -201,6 +201,7 @@ namespace Minerva
         {
             createInfo.enabledLayerCount = 0;
         }
+        deviceFeatures.sampleRateShading = VK_TRUE;
         if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &logicalDevice) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create logical device!");
@@ -294,6 +295,9 @@ namespace Minerva
         }
 
         vkDestroySwapchainKHR(logicalDevice, swapChain, nullptr);
+        vkDestroyImageView(logicalDevice, engineRenderer.colorImageView, nullptr);
+        vkDestroyImage(logicalDevice, engineRenderer.colorImage, nullptr);
+        vkFreeMemory(logicalDevice, engineRenderer.colorImageMemory, nullptr);
     }
 
     VkImageView Device::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
@@ -333,6 +337,7 @@ namespace Minerva
 
         CreateSwapChain();
         CreateImageViews();
+        engineRenderer.CreateColorResources();
         engineRenderer.CreateDepthResources();
         engineRenderer.CreateFramebuffers();
     }
@@ -378,6 +383,23 @@ namespace Minerva
         actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
         return actualExtent;
         
+    }
+
+    VkSampleCountFlagBits Device::GetMaxUsableSample()
+    {
+        VkPhysicalDeviceProperties physicalDeviceProperties;
+        vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
+        VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts 
+        & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+        if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+        if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+        if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+        if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+        if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+        if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+        return VK_SAMPLE_COUNT_1_BIT;
     }
 
     void Device::CreateSwapChain()

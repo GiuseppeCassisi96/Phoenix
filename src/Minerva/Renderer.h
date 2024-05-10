@@ -45,6 +45,9 @@ namespace Minerva
         UniformBuffers transformationUBuffers; 
         UniformBuffers animUBuffers; 
         BoneMatricesUniformType UNBoneMatrices;
+        VkImage colorImage;
+        VkDeviceMemory colorImageMemory;
+        VkImageView colorImageView;
 
         void CreateRenderPass();
         void CreateFramebuffers();
@@ -75,6 +78,7 @@ namespace Minerva
         void PrepareIndirectData(Phoenix::LOD& lod);
         bool HasStencilComponent(VkFormat format);
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+        void CreateColorResources();
 
         Renderer() = default;
         ~Renderer();

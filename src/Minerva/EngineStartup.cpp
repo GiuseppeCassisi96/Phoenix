@@ -94,6 +94,7 @@ namespace Minerva
         engineRenderer.CreateDescriptorSetLayout();
         enginePipeline.CreatePipeline("vert", "frag");
         engineRenderer.CreateCommandPool();
+        engineRenderer.CreateColorResources();
         engineRenderer.CreateDepthResources();
         engineRenderer.CreateFramebuffers();
         texture.CreateTextureImage(choosenSample.textureName);

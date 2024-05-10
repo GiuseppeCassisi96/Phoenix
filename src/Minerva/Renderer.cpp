@@ -13,23 +13,33 @@ namespace Minerva
     {
         VkAttachmentDescription colorAttachment{};
         colorAttachment.format = engineDevice.swapChainImageFormat;
-        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachment.samples = VK_SAMPLE_COUNT_8_BIT;
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkAttachmentDescription depthAttachment{};
         depthAttachment.format = FindDepthFormat();
-        depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        depthAttachment.samples = VK_SAMPLE_COUNT_8_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        VkAttachmentDescription colorAttachmentResolve{};
+        colorAttachmentResolve.format = engineDevice.swapChainImageFormat;
+        colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
         VkAttachmentReference colorAttachmentRef{};
         colorAttachmentRef.attachment = 0;
@@ -39,24 +49,29 @@ namespace Minerva
         depthAttachmentRef.attachment = 1;
         depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+        VkAttachmentReference colorAttachmentResolveRef{};
+        colorAttachmentResolveRef.attachment = 2;
+        colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
         VkSubpassDescription subpass{};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 1;
         subpass.pColorAttachments = &colorAttachmentRef;
         subpass.pDepthStencilAttachment = &depthAttachmentRef;
+        subpass.pResolveAttachments = &colorAttachmentResolveRef;
 
         VkSubpassDependency dependency{};
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
         dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT 
         | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT 
         | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT 
         | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-        std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
+        std::array<VkAttachmentDescription, 3> attachments = {colorAttachment, depthAttachment, colorAttachmentResolve};
         VkRenderPassCreateInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -74,9 +89,11 @@ namespace Minerva
     {
         swapChainFramebuffers.resize(engineDevice.swapChainImageViews.size());
         for (size_t i = 0; i < engineDevice.swapChainImageViews.size(); i++) {
-            std::array<VkImageView, 2> attachments = {
+            std::array<VkImageView, 3> attachments = {
+                engineRenderer.colorImageView,
+                depthImageView,
                 engineDevice.swapChainImageViews[i],
-                depthImageView
+               
             };
 
             VkFramebufferCreateInfo framebufferInfo{};
@@ -593,10 +610,13 @@ namespace Minerva
     void Renderer::CreateDepthResources()
     {
         VkFormat depthFormat = FindDepthFormat();
+
         texture.CreateImage(engineDevice.swapChainExtent.width, engineDevice.swapChainExtent.height, 
         depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory, engineDevice.msaaSamples);
+
         depthImageView = engineDevice.CreateImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
         TransitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     }
@@ -677,6 +697,17 @@ namespace Minerva
         }
 
         throw std::runtime_error("failed to find suitable memory type!");
+    }
+
+    void Renderer::CreateColorResources()
+    {
+        VkFormat colorFormat = engineDevice.swapChainImageFormat;
+
+        texture.CreateImage(engineDevice.swapChainExtent.width, engineDevice.swapChainExtent.height, 
+        colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, colorImageMemory, VK_SAMPLE_COUNT_8_BIT);
+
+        colorImageView = engineDevice.CreateImageView(colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
     void Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, 
@@ -778,6 +809,10 @@ namespace Minerva
         vkDestroyDescriptorSetLayout(engineDevice.logicalDevice, descriptorSetLayout, nullptr);
         vkDestroyBuffer(engineDevice.logicalDevice, indirectCommandsBuffer.buffer, nullptr);
         vkFreeMemory(engineDevice.logicalDevice, indirectCommandsBuffer.memory, nullptr);
+
+        vkDestroyImageView(engineDevice.logicalDevice, colorImageView, nullptr);
+        vkDestroyImage(engineDevice.logicalDevice, colorImage, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, colorImageMemory, nullptr);
     }
     Renderer::Renderer(Renderer &&other) noexcept
     {
@@ -821,10 +856,6 @@ namespace Minerva
             vkDestroyBuffer(engineDevice.logicalDevice, other.transformationUBuffers.uniformBuffers[i], nullptr);
             vkFreeMemory(engineDevice.logicalDevice, other.transformationUBuffers.uniformBuffersMemory[i], nullptr);
         }
-
-        vkDestroyImageView(engineDevice.logicalDevice, other.depthImageView, nullptr);
-        vkDestroyImage(engineDevice.logicalDevice, other.depthImage, nullptr);
-        vkFreeMemory(engineDevice.logicalDevice, other.depthImageMemory, nullptr);
 
     }
     Renderer &Renderer::operator=(Renderer &&other) noexcept

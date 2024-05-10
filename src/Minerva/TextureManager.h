@@ -13,7 +13,7 @@ namespace Minerva
         void CreateTextureSampler();
         void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, 
         VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, 
-        VkDeviceMemory& imageMemory);
+        VkDeviceMemory& imageMemory, VkSampleCountFlagBits numSamples);
         TextureManager() = default;
         ~TextureManager();
 

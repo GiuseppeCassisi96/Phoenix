@@ -39,6 +39,8 @@ namespace Minerva
         VkQueue presentationQueue = VK_NULL_HANDLE;
         VkPresentModeKHR presentMode;
         VkSurfaceFormatKHR surfaceFormat;
+        VkSampleCountFlagBits msaaSamples;
+        VkPhysicalDeviceFeatures deviceFeatures;
         //The handle of logical device
         VkDevice logicalDevice = VK_NULL_HANDLE;
         std::vector<VkImageView> swapChainImageViews;
@@ -108,6 +110,7 @@ namespace Minerva
         /// @param capabilities Capabilities of window surface
         /// @return The extent of swap chain 
         VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+        VkSampleCountFlagBits GetMaxUsableSample(); 
         
     };
 }

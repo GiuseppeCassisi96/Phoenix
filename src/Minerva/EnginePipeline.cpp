@@ -90,7 +90,8 @@ namespace Minerva
         VkPipelineMultisampleStateCreateInfo multisampling{};
         multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampling.sampleShadingEnable = VK_FALSE;
-        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        multisampling.rasterizationSamples = engineDevice.msaaSamples; 
+        multisampling.minSampleShading = .2f;
 
         VkPipelineDepthStencilStateCreateInfo depthStencil{};
         depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -150,6 +151,7 @@ namespace Minerva
             throw std::runtime_error("failed to create graphics pipeline!");
         }
 
+        
         vkDestroyShaderModule(engineDevice.logicalDevice, fragShaderModule, nullptr);
         vkDestroyShaderModule(engineDevice.logicalDevice, vertShaderModule, nullptr);
     }

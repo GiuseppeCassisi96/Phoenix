@@ -59,6 +59,7 @@ namespace Minerva
         imGuiImplInfo.DescriptorPool = engineRenderer.descriptorPool;
         imGuiImplInfo.RenderPass = engineRenderer.renderPass;
         imGuiImplInfo.Device = engineDevice.logicalDevice;
+        imGuiImplInfo.MSAASamples = engineDevice.msaaSamples;
         imGuiImplInfo.PhysicalDevice = engineDevice.physicalDevice;
         imGuiImplInfo.ImageCount = engineRenderer.MAX_FRAMES_IN_FLIGHT;
         imGuiImplInfo.MinImageCount = engineRenderer.MAX_FRAMES_IN_FLIGHT;
