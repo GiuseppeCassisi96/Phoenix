@@ -13,10 +13,10 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${MINERVA_SRC} ${PHOENIX_SRC}
 ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp ${IMGUI_PATH}/backends/imgui_impl_vulkan.cpp
  ${IMGUI_PATH}/imgui.cpp ${IMGUI_PATH}/imgui_draw.cpp ${IMGUI_PATH}/imgui_demo.cpp 
  ${IMGUI_PATH}/imgui_tables.cpp
- ${IMGUI_PATH}/imgui_widgets.cpp 
+ ${IMGUI_PATH}/imgui_widgets.cpp
  ${MESHOPTIMIZER_PATH}/simplifier.cpp
  ${MESHOPTIMIZER_PATH}/meshoptimizer.h
- ${MESHOPTIMIZER_PATH}/clusterizer.cpp) 
+ ${MESHOPTIMIZER_PATH}/clusterizer.cpp ) 
 
 #Here I set the compiler. I will use g++ compiler for .cpp files 
 message(STATUS "Using ${CMAKE_GENERATOR}")

@@ -8,9 +8,8 @@ namespace Minerva
     void ModelLoader::LoadModel(std::string fileName)
     {
         Assimp::Importer importer;
-
         const aiScene *scene = importer.ReadFile((MODELS_PATH + fileName).c_str(), 
-        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices );
+        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
 
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
         {
@@ -87,6 +86,7 @@ namespace Minerva
         info.numberOfBones = mesh->mNumBones;
         info.numberOfPolygons = mesh->mNumFaces;
         info.numberOfVertices = mesh->mNumVertices;
+        std::cout << "\n\nFirst vertices num: " << mesh->mNumVertices << "\n\n";
         return createdMesh;
     }
     void ModelLoader::PrepareInstanceData(SampleType type)

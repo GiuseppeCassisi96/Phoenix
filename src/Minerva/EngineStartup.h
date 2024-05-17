@@ -11,8 +11,9 @@ namespace Minerva
         std::unordered_map<std::string, SampleType> samplesTest
         {
             {"0", SampleType()},
-            {"1", SampleType()}
-            
+            {"1", SampleType()},
+            {"2", SampleType()},
+            {"3", SampleType()},
         };
         std::vector<Animation> animations;
         Animator animator;

@@ -4,6 +4,7 @@
 #include <chrono>
 #include "glm/gtx/norm.hpp"
 
+
 /*Merge and Group methods are based on: https://jglrxavpok.github.io/2024/01/19/recreating-nanite-lod-generation.html
 post*/
 
@@ -15,8 +16,14 @@ namespace Phoenix
         LOD firstLod;
         firstLod.lodVertexBuffer = vertices;
         firstLod.lodIndexBuffer = indices;
+        std::cout << "INDEX: " << firstLod.lodIndexBuffer.size() << "\n";
         Split(firstLod, firstLod.lodIndexBuffer);
         Group(firstLod);
+        firstLod.lod = 0;
+        for(int index = 0; index < firstLod.lodIndexBuffer.size(); index++)
+        {
+            firstLod.vertexNumber.insert(firstLod.lodIndexBuffer[index]).second;
+        }
         lods.emplace_back(firstLod);
         int lodIndex = 0;
         
@@ -30,20 +37,33 @@ namespace Phoenix
             currentLod.lodVertexBuffer = prevLod->lodVertexBuffer;
             std::vector<uint32_t> groupIndexBuffer;
             float totalError = 0.0f;
-            for(auto& group : prevLod->groups) 
+            int count = 0;
+            
+            for(int i = 0; i < prevLod->groups.size(); i++) 
             {
+                MeshletGroup* group = &prevLod->groups[i];
                 float outError = 0.0f;
-                Merge(group,*prevLod,group.localGroupIndexBuffer);
-                groupIndexBuffer = group.localGroupIndexBuffer;
+                Merge(*group,*prevLod,group->localGroupIndexBuffer);
+                groupIndexBuffer = group->localGroupIndexBuffer;
                 assert(groupIndexBuffer.size() % 3 == 0);
                 auto simplifiedCount = Simplify(groupIndexBuffer, currentLod, outError);
+                count += static_cast<int>(simplifiedCount);
                 if(simplifiedCount > 0)
-                    group.nextMeshlets = Split(currentLod, groupIndexBuffer);
+                {
+                    Split(currentLod, groupIndexBuffer, prevLod, i);
+                }
                 totalError += outError;
-            } 
+                group->groupError = currentLod.lodError;
+            }
+            
+            for(int index = 0; index < currentLod.lodIndexBuffer.size(); index++)
+            {
+                currentLod.vertexNumber.insert(currentLod.lodIndexBuffer[index]).second;
+            }
+            std::cout << "Half: " << currentLod.lodIndexBuffer.size() << "\n";
             lodIndex++;
             currentLod.lod = lodIndex;
-            Group(currentLod);
+            Group(currentLod, prevLod);
             currentLod.lodError = (totalError / currentLod.groups.size()) + prevLod->lodError;
             lods.emplace_back(currentLod);
         }
@@ -54,7 +74,8 @@ namespace Phoenix
         std::cout << "pippo\n";
     }
 
-    std::vector<MeshletGroup> PhoenixMesh::Group(LOD& currentLod)
+ 
+    std::vector<MeshletGroup> PhoenixMesh::Group(LOD& currentLod, LOD* prevLod)
     {  
 
         auto groupWithAllMeshlets = [&]() 
@@ -73,7 +94,7 @@ namespace Phoenix
         }
 
 
-        //I use set and unordered map to avoid duplicate edges
+        //I use set to avoid duplicate edges
         std::unordered_map<MeshletEdge, std::unordered_set<size_t>, MeshletEdgeHasher> edges2Meshlets;
         std::unordered_map<size_t, std::unordered_set<MeshletEdge, MeshletEdgeHasher>> meshlets2Edges;
         for(size_t meshletIndex = 0; meshletIndex < currentLod.lodVerticesMeshlets.size(); meshletIndex++) 
@@ -83,13 +104,13 @@ namespace Phoenix
             auto getVertexIndex = [&](size_t index) 
             {
                 size_t indexVertex = currentLod.lodMeshletsClusterIndex[currentLod.lodMeshletsClusterTriangle
-                [index + meshlet.triangle_offset] + meshlet.vertex_offset];
+                [index + meshlet.meshletData.triangle_offset] + meshlet.meshletData.vertex_offset];
                 return indexVertex;
             };
 
-            const size_t triangleCount = meshlet.triangle_count;
+            const size_t triangleCount = meshlet.meshletData.triangle_count;
             // for each triangle of the meshlet
-            for(size_t triangleIndex = 0; triangleIndex < triangleCount; triangleIndex++) 
+            for(size_t triangleIndex = 0; triangleIndex < triangleCount; triangleIndex+=3) 
             {
                 // for each edge of the triangle
                 for(size_t i = 0; i < 3; i++) 
@@ -120,8 +141,15 @@ namespace Phoenix
         // only one constraint, minimum required by METIS
         idx_t ncon = 1; 
         // groups of MAX_GROUP_NUMBER 
-        idx_t nparts = static_cast<idx_t>(currentLod.lodVerticesMeshlets.size() / MAX_GROUP_NUMBER); 
-        assert(nparts > 1);
+        idx_t nparts = static_cast<idx_t>(currentLod.lodVerticesMeshlets.size() / groupNumber);
+        groupNumber *= 2;
+        while (nparts <= 1)
+        {          
+            nparts = static_cast<idx_t>(currentLod.lodVerticesMeshlets.size() / groupNumber);
+            groupNumber /= 2;
+        }
+        
+       // assert(nparts > 1);
         idx_t options[METIS_NOPTIONS];
         METIS_SetDefaultOptions(options);
         options[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT;
@@ -200,34 +228,57 @@ namespace Phoenix
         {
           idx_t partitionNumber = partition[i];
           currentLod.groups[partitionNumber].meshlets.push_back(i);
-          currentLod.meshletToGroup.insert({i, partitionNumber});
+          if(prevLod)
+          {
+            idx_t oldGroup = prevLod->meshletToGroup[i];
+            prevLod->groups[oldGroup].parentsGroup.insert(partitionNumber);
+          }
+          
         }
+
+        //Remove group with zero meshlets
+        for (int i = 0; i < currentLod.groups.size(); i++)
+        {
+            MeshletGroup group = currentLod.groups[i];
+            if(group.meshlets.size() == 0)
+            {
+                currentLod.groups.erase(currentLod.groups.begin() + i);
+            }
+        }
+        
         return currentLod.groups;
     }
 
-    void PhoenixMesh::Merge(const MeshletGroup& group, const LOD& currentLod, 
+    void PhoenixMesh::Merge(MeshletGroup& group, LOD& currentLod, 
     std::vector<uint32_t>& localGroupIndexBuffer)
     {
-      
+        size_t faceCount = 0;
+        std::unordered_set<uint32_t> uniqueVertexIndex;
        for(const auto& meshletIndex : group.meshlets) 
        {
-            const auto& meshlet = currentLod.lodVerticesMeshlets[meshletIndex];
-            size_t start = localGroupIndexBuffer.size();
-            localGroupIndexBuffer.resize(start + meshlet.triangle_count * 3);
+            const auto& meshlet = currentLod.lodVerticesMeshlets[meshletIndex].meshletData;
+            faceCount += meshlet.triangle_count;
+            std::vector<uint32_t> perMeshletInndexBuffer;
             for(size_t j = 0; j < meshlet.triangle_count * 3; j++) 
             {
                 uint32_t index = currentLod.lodMeshletsClusterIndex[currentLod.lodMeshletsClusterTriangle
                 [meshlet.triangle_offset + j] + meshlet.vertex_offset];
-                localGroupIndexBuffer[j + start] = index;
-            }
-        }
+                localGroupIndexBuffer.emplace_back(index);
+                perMeshletInndexBuffer.emplace_back(index);
+                uniqueVertexIndex.insert(index);
+            }    
+            currentLod.lodVerticesMeshlets[meshletIndex].bound = 
+            meshopt_computeClusterBounds(perMeshletInndexBuffer.data(), perMeshletInndexBuffer.size(),
+            &currentLod.lodVertexBuffer[0].pos.x, currentLod.lodVertexBuffer.size(), sizeof(MINERVA_VERTEX)); 
+        } 
+
     }
 
     size_t PhoenixMesh::Simplify(std::vector<uint32_t>& localGroupIndexBuffer, LOD& currentLod,
     float& outError)
     {
-        float targetError = 0.05f; 
-        // I force the simplifier to simplify more
+        float interValue = currentLod.lod / MAX_LOD_NUMBER;
+        float targetError = 0.9f * interValue + 0.01f * (1-interValue); 
         float threshold =  0.5f;
         size_t targetIndexCount = localGroupIndexBuffer.size() * threshold;
 
@@ -237,17 +288,20 @@ namespace Phoenix
         
         localGroupIndexBuffer.resize(simplifiedSize);
         
-        currentLod.lodIndexBuffer.insert(currentLod.lodIndexBuffer.end(), localGroupIndexBuffer.begin(), 
-        localGroupIndexBuffer.end());
-        //Fill the lodIndexBuffer
+        for(int i = 0; i < localGroupIndexBuffer.size(); i++)
+        {
+            currentLod.lodIndexBuffer.emplace_back(localGroupIndexBuffer[i]);
+        }
+
         return simplifiedSize;
     }
 
 
 
-    std::vector<size_t> PhoenixMesh::Split(LOD& currentLod, std::vector<uint32_t> indexBuffer)
+    void PhoenixMesh::Split(LOD& currentLod, std::vector<uint32_t> indexBuffer,
+    LOD* prevLod, idx_t groupIndex)
     {
-        const float cone_weight = 0.0f;
+        const float cone_weight = 0.5f;
 
         size_t max_meshlets = meshopt_buildMeshletsBound(indexBuffer.size(), MESHLET_VERTICES_NUMBER,
         MESHLET_TRIANGLE_NUMBER);
@@ -278,20 +332,19 @@ namespace Phoenix
         currentLod.lodMeshletsClusterTriangle.resize(triangleArrayOffset + (last.triangle_offset  + 
         ((last.triangle_count * 3 + 3) & ~3)));
         currentLod.lodVerticesMeshlets.resize(meshletArrayOffset + meshletCount);
-        std::vector<size_t> nextMeshlets;
 
         //Fill the phoenixMeshlets
         for(size_t i = meshletArrayOffset; i < localmeshlets.size() + meshletArrayOffset; i++)
         {
+            if(prevLod)
+                prevLod->meshletToGroup.insert({i, groupIndex});
             meshopt_Meshlet currentMeshlet = localmeshlets[i - meshletArrayOffset];
             if(currentLod.lod != 0)
             {
                 currentMeshlet.vertex_offset = static_cast<uint32_t>(vertexArrayOffset) + currentMeshlet.vertex_offset;
                 currentMeshlet.triangle_offset = static_cast<uint32_t>(triangleArrayOffset) + currentMeshlet.triangle_offset;
             }
-            localmeshlets[i - meshletArrayOffset] = currentMeshlet;
-            currentLod.lodVerticesMeshlets[i] = localmeshlets[i - meshletArrayOffset];
-            nextMeshlets.emplace_back(value);
+            currentLod.lodVerticesMeshlets[i].meshletData = currentMeshlet;
             value++;
         }
 
@@ -308,9 +361,51 @@ namespace Phoenix
             currentLod.lodMeshletsClusterTriangle[i] = localMeshletsClusterTriangle
             [i - triangleArrayOffset];
         }
-        return nextMeshlets;
     }
-   
+
+    void PhoenixMesh::ApplyReduction(std::vector<uint32_t>& simplifiedIndexBuffer, const LOD& currentLod)
+    {
+        float interValue = currentLod.lod / MAX_LOD_NUMBER;
+        float maxDistance = 0.001f * interValue + 0.0001f * (1 - interValue);
+        float currentMaxDistance = maxDistance * maxDistance;
+        std::unordered_set<uint32_t> uniqueVertexIndex;
+        std::vector<MINERVA_VERTEX> localVertexBuffer;
+        for(auto index : simplifiedIndexBuffer)
+        {
+            if(uniqueVertexIndex.insert(index).second)
+            {
+                localVertexBuffer.emplace_back(currentLod.lodVertexBuffer[index]);
+            }
+        }
+
+        for(uint32_t i = 0; i < localVertexBuffer.size(); i++)
+        {
+            MINERVA_VERTEX currentVertex = localVertexBuffer[i];
+            int indexReplaced = -1; 
+            for(uint32_t j = 0; j < i; j++)
+            {
+                MINERVA_VERTEX otherVertex = localVertexBuffer[simplifiedIndexBuffer[j]];
+                float currentDistance = glm::distance2(currentVertex.pos, otherVertex.pos);
+                if(currentDistance <= currentMaxDistance)
+                {
+                    indexReplaced = j;
+                    currentMaxDistance = currentDistance;
+                }
+                if(indexReplaced == -1)
+                {
+                    simplifiedIndexBuffer[i] = i;
+                }
+                else
+                {
+                    simplifiedIndexBuffer[i] = j;
+                }
+                
+            }
+        }
+       
+        
+    }
+
     void PhoenixMesh::ColourMeshelets(MeshletGroup& group, std::vector<MINERVA_VERTEX> &vertices)
     {        
         std::random_device rd;

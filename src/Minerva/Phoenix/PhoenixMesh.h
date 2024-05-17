@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "metis.h"
+#include <random>
 #define MESHLET_VERTICES_NUMBER 128
 #define MESHLET_TRIANGLE_NUMBER 256
 #define MAX_LOD_NUMBER 5
@@ -15,7 +16,6 @@
 post*/
 namespace Phoenix
 {
-
     struct MeshletEdge 
     {
         MeshletEdge(size_t a, size_t b): first((std::min)(a, b)), second((std::max)(a, b)) {}
@@ -31,28 +31,37 @@ namespace Phoenix
         //I need to define an hasing function
         size_t operator()(const MeshletEdge& edge) const 
         {
-            return glm::mix(edge.first, edge.second, 0.5f);
+            std::hash<size_t> t;
+            return (t._Do_hash(edge.first)) | (t._Do_hash(edge.second));
         }
+    };
+    
+    struct PhoenixMeshlet
+    {
+        meshopt_Meshlet meshletData;
+        meshopt_Bounds bound;
     };
 
     struct MeshletGroup
     {
         std::vector<size_t> meshlets;
         std::vector<uint32_t> localGroupIndexBuffer;
-        std::vector<size_t> nextMeshlets;
+        std::unordered_set<idx_t> parentsGroup;
+        float groupError = 0.0f;
     };
 
     struct LOD
     {
-        std::vector<meshopt_Meshlet> lodVerticesMeshlets;
+        std::vector<PhoenixMeshlet> lodVerticesMeshlets;
         std::vector<uint32_t> lodMeshletsClusterIndex;
         std::vector<unsigned char> lodMeshletsClusterTriangle;
         std::vector<MeshletGroup> groups;
         std::vector<uint32_t> lodIndexBuffer;
         std::vector<MINERVA_VERTEX> lodVertexBuffer;
         std::unordered_map<size_t, idx_t> meshletToGroup;
-        std::uint32_t lod = 0;
-        float lodError = 0.0f;
+        std::unordered_set<uint32_t> vertexNumber;
+        uint32_t lod = 0;
+        float lodError;
         
     };
 
@@ -60,15 +69,17 @@ namespace Phoenix
     {
     public:
         std::vector<LOD> lods;
-        std::vector<int> vertexRemap;
+        int lodIndex = 0;
+        int groupNumber = MAX_GROUP_NUMBER;
         
         void ColourMeshelets(MeshletGroup& group, std::vector<MINERVA_VERTEX>& vertices);
         void BuildLodsHierarchy(std::vector<MINERVA_VERTEX>& vertices, std::vector<uint32_t> &indices);
-        std::vector<MeshletGroup> Group(LOD& currentLod);
-        void Merge(const MeshletGroup& group, const LOD& currentLod, 
-        std::vector<uint32_t>& localGroupIndexBuffer);
+        std::vector<MeshletGroup> Group(LOD& currentLod, LOD* prevLod = nullptr);
+        void Merge(MeshletGroup& group, LOD& currentLod, std::vector<uint32_t>& localGroupIndexBuffer);
         size_t Simplify(std::vector<uint32_t>& localGroupIndexBuffer, LOD& currentLod, float& outError);
-        std::vector<size_t> Split(LOD& currentLod, std::vector<uint32_t> indexBuffer);
+        void Split(LOD& currentLod, std::vector<uint32_t> indexBuffer, 
+        LOD* prevLod = nullptr, idx_t groupIndex = 0);
+        void ApplyReduction(std::vector<uint32_t>& simplifiedIndexBuffer, const LOD& currentLod);
         
         PhoenixMesh() = default;
         ~PhoenixMesh() = default;

@@ -1,6 +1,7 @@
 #include "EngineStartup.h"
 #include <iostream>
 #include "Phoenix/PhoenixMesh.h"
+#include "Phoenix/LODSelectionDispatcher.h"
 #include <chrono>
 #include <algorithm>
 
@@ -48,31 +49,47 @@ namespace Minerva
 
     void EngineStartup::Start()
     {
-        samplesTest["0"].modelName = "statue.obj";
-        samplesTest["0"].textureName = "statueColor.jpg";
-        samplesTest["0"].scale = 1.0f;
+        samplesTest["0"].modelName = "bunny.obj";
+        samplesTest["0"].textureName = "statueColor.jpeg";
+        samplesTest["0"].scale = 130.0f;
         samplesTest["0"].rowDim = 20;
         samplesTest["0"].distanceMultiplier = 30.0f;
 
-        samplesTest["1"].animNumber = 3;
-        samplesTest["1"].animName.emplace_back("monsterIdle.fbx");
-        samplesTest["1"].animName.emplace_back("monsterWalk.fbx");
-        samplesTest["1"].animName.emplace_back("monsterRun.fbx");
-        samplesTest["1"].modelName = "monster.fbx";
-        samplesTest["1"].textureName = "monsterColor.png";
-        samplesTest["1"].scale = 0.2f;
-        samplesTest["1"].rowDim = 40;
-        samplesTest["1"].distanceMultiplier = 45.0f;
+        samplesTest["1"].modelName = "lucy.obj";
+        samplesTest["1"].textureName = "statueColor.jpeg";
+        samplesTest["1"].scale = 0.13f;
+        samplesTest["1"].rowDim = 20;
+        samplesTest["1"].distanceMultiplier = 60.0f;
+
+        samplesTest["2"].modelName = "happy.obj";
+        samplesTest["2"].textureName = "statueColor.jpeg";
+        samplesTest["2"].scale = 300.0f;
+        samplesTest["2"].rowDim = 20;
+        samplesTest["2"].distanceMultiplier = 60.0f;
+
+        samplesTest["3"].animNumber = 3;
+        samplesTest["3"].animName.emplace_back("monsterIdle.fbx");
+        samplesTest["3"].animName.emplace_back("monsterWalk.fbx");
+        samplesTest["3"].animName.emplace_back("monsterRun.fbx");
+        samplesTest["3"].modelName = "monster.fbx";
+        samplesTest["3"].textureName = "monsterColor.png";
+        samplesTest["3"].scale = 0.2f;
+        samplesTest["3"].rowDim = 40;
+        samplesTest["3"].distanceMultiplier = 45.0f;
+
+        
 
          
         std::string key;
         int lodSelected = 0;
 
         std::cout << "Choose the model which you want rendered: \n"
-        << "Insert '0' to render the static model\n"
-        << "Insert '1' to render the skeletal model\n";
+        << "Insert '0' to render the bunny static model\n"
+        << "Insert '1' to render the lucy static model\n"
+        << "Insert '2' to render the happy budda static model\n"
+        << "Insert '3' to render the skeletal model\n" ;
         std::cin >> key;
-        assert(key == "1" || key == "0");
+        assert(key == "1" || key == "0" || key == "2" || key == "3");
         std::cout << "Select the instance number: ";
         std::cin >> engineModLoader.instanceNumber;
         std::cout << "Select the LOD between 0 and 5: ";
@@ -116,6 +133,7 @@ namespace Minerva
             animator.CreateAnimator(&animations[0]);
         }
         Phoenix::PhoenixMesh phoenixMesh; 
+        Phoenix::LODSelectionDispatcher dispatcher;
         auto startTime = std::chrono::high_resolution_clock::now();
         phoenixMesh.BuildLodsHierarchy(engineModLoader.sceneMeshes[0].vertices, 
         engineModLoader.sceneMeshes[0].indices);
@@ -128,6 +146,9 @@ namespace Minerva
         {
             phoenixMesh.ColourMeshelets(group,engineModLoader.sceneMeshes[0].vertices);
         }
+
+        engineModLoader.info.numberOfVertices =  phoenixMesh.lods[lodSelected].vertexNumber.size();
+        dispatcher.PrepareComputeData(phoenixMesh.lods);
         engineRenderer.PrepareIndirectData(phoenixMesh.lods[lodSelected]);
         engineModLoader.PrepareInstanceData(choosenSample);
         engineRenderer.CreateVertexBuffer();
