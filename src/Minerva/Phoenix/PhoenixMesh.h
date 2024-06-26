@@ -50,6 +50,7 @@ namespace Phoenix
     struct PhoenixMeshlet
     {
         std::vector<uint32_t> meshletIndexBuffer;
+        std::vector<MINERVA_VERTEX> meshletVertexBuffer;
         meshopt_Meshlet meshletData;
         idx_t meshletID;  
         PhoenixBound parentBound;
@@ -57,7 +58,7 @@ namespace Phoenix
         float error = 0.0f;
         float parentError = 0.0f;
         int lod = 0;
-        glm::vec3 groupColor;
+        glm::vec3 meshletColor;
     };
 
     struct MeshletGroup
@@ -83,12 +84,14 @@ namespace Phoenix
         PhoenixWelzl welzl;
         int meshletID = 0;
         std::vector<PhoenixMeshlet> totalMeshlets;
+        std::unordered_set<uint32_t> uniqueIndex;
         
-        void ColourGroups(MeshletGroup& group, std::vector<MINERVA_VERTEX>& vertices);
-        void SetColor(MeshletGroup& group);
+        void ColourGroups(PhoenixMeshlet& meshlet, std::vector<MINERVA_VERTEX>& vertices);
+        void SetColor(PhoenixMeshlet& meshlet);
         void BuildLodsHierarchy(std::vector<MINERVA_VERTEX>& vertices, std::vector<uint32_t> &indices);
         std::vector<MeshletGroup> Group(LOD& currentLod, LOD* prevLod = nullptr);
-        void Merge(const MeshletGroup& group, LOD& prevLod, std::vector<uint32_t>& groupIndexBuffer);
+        void Merge(const MeshletGroup& group, LOD& prevLod, std::vector<uint32_t>& groupIndexBuffer, 
+        std::unordered_set<uint32_t>& uniqueIndex);
         size_t Simplify(std::vector<uint32_t>& groupIndexBuffer, const std::vector<MINERVA_VERTEX>& groupVertexBuffer, 
         LOD& currentLod, float& outError);
         void Split(LOD& currentLod, std::vector<uint32_t> groupIndexBuffer, float error, LOD* prevLod, 

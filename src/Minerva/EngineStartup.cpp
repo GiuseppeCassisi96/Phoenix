@@ -51,22 +51,22 @@ namespace Minerva
 
     void EngineStartup::Start()
     {
-        samplesTest["0"].modelName = "bunny.obj";
-        samplesTest["0"].textureName = "statueColor.jpeg";
-        samplesTest["0"].scale = 600.0f;
+        samplesTest["0"].modelName = "submarine.fbx";
+        samplesTest["0"].textureName = "submarineColor.png";
+        samplesTest["0"].scale = 500.0f;
         samplesTest["0"].rowDim = 20;
         samplesTest["0"].distanceMultiplier = 30.0f;
-        samplesTest["0"].tError = 0.4f;
+        samplesTest["0"].tError = 0.5f;
 
         samplesTest["1"].modelName = "dancer.obj";
-        samplesTest["1"].textureName = "statueColor.jpeg";
+        samplesTest["1"].textureName = "dancerColor.jpg";
         samplesTest["1"].scale = 1.0f;
         samplesTest["1"].rowDim = 20;
         samplesTest["1"].distanceMultiplier = 60.0f;
         samplesTest["1"].tError = 1.0f;
 
         samplesTest["2"].modelName = "teapot.fbx";
-        samplesTest["2"].textureName = "statueColor.jpeg";
+        samplesTest["2"].textureName = "teepotColor.png";
         samplesTest["2"].scale = 20.0f;
         samplesTest["2"].rowDim = 20;
         samplesTest["2"].distanceMultiplier = 60.0f;
@@ -81,12 +81,12 @@ namespace Minerva
         samplesTest["3"].scale = 1.0f;
         samplesTest["3"].rowDim = 40;
         samplesTest["3"].distanceMultiplier = 100.0f;
-        samplesTest["3"].tError = 13.5f;
+        samplesTest["3"].tError = 10.5f;
    
         std::string key;
 
         std::cout << "Choose the model which you want rendered: \n"
-        << "Insert '0' to render the bunny static model\n"
+        << "Insert '0' to render the submarine static model\n"
         << "Insert '1' to render the dancer static model\n"
         << "Insert '2' to render the teapot static model\n"
         << "Insert '3' to render the skeletal model\n" ;
@@ -170,7 +170,6 @@ namespace Minerva
     void EngineStartup::Loop()
     {
         size_t maxSize = engineModLoader.sceneMeshes[0].indices.size();
-        //engineModLoader.sceneMeshes[0].indices.clear();
         
         while (!glfwWindowShouldClose(windowInstance.window)) 
         {
@@ -184,17 +183,11 @@ namespace Minerva
             
             engineModLoader.sceneMeshes[0].indices = dispatcher.LodSelector(phoenixMesh.totalMeshlets, 
             windowInstance.WIDTH, glm::radians(45.0f), phoenixMesh.lods[0], 
-            engineModLoader.instancesData[0].instancePos, avgLOD, vertBuffer, windowInstance.count,
-            engineTransform, choosenSample);
+            engineModLoader.instancesData[0].instancePos, avgLOD, vertBuffer,
+            engineTransform, choosenSample,phoenixMesh, engineModLoader.sceneMeshes[0].vertices);
 
             if(engineModLoader.sceneMeshes[0].indices.size() > maxSize)
-            {
-                std::cout << "TOO MUCH!!!\n";
-                engineModLoader.sceneMeshes[0].indices.resize(maxSize);
-            }
-            assert(engineModLoader.sceneMeshes[0].indices.size() <= maxSize);
-            //engineModLoader.sceneMeshes[0].vertices = vertBuffer;
-            //engineModLoader.sceneMeshes[0].indices = phoenixMesh.lods[0].lodIndexBuffer;
+                engineModLoader.sceneMeshes[0].indices.resize(maxSize); 
             engineModLoader.info.numberOfVertices = vertBuffer.size();
             engineModLoader.info.numberOfPolygons = engineModLoader.sceneMeshes[0].indices.size() / 3;
             engineRenderer.DrawFrame(); 

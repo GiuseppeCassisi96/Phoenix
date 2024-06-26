@@ -112,8 +112,10 @@ namespace Minerva
 
          struct MeshBuffer
         {
-            VkBuffer vertexBuffer = VK_NULL_HANDLE;
-            VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
+            std::vector<VkBuffer> vertexBuffer;
+            std::vector<VkDeviceMemory> vertexBufferMemory;
+            std::vector<void*> vertexBufferMapped;
+            
             std::vector<VkBuffer> indexBuffer;
             std::vector<VkDeviceMemory> indexBufferMemory;
             std::vector<void*> indexBufferMapped;

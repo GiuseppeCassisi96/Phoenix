@@ -153,8 +153,7 @@ namespace Minerva
         renderPassInfo.renderArea.extent = engineDevice.swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        //clearValues[0].color = {{0.17f, 0.3f, 0.75f, 1.0f}};
-        clearValues[0].color = {{1.0f, 1.0f, 1.0f, 1.0f}};
+        clearValues[0].color = {{0.17f, 0.3f, 0.75f, 1.0f}};
         clearValues[1].depthStencil = {1.0f, 0};
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -178,7 +177,7 @@ namespace Minerva
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
             Mesh* mesh = &engineModLoader.sceneMeshes[0];
-            VkBuffer vertexBuffers[] = {mesh->meshBuffer.vertexBuffer};
+            VkBuffer vertexBuffers[] = {mesh->meshBuffer.vertexBuffer[currentFrame]};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindVertexBuffers(commandBuffer, 1, 1, &engineModLoader.instanceBuffer.buffer, offsets);
@@ -188,12 +187,6 @@ namespace Minerva
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->indices.size()), 
             engineModLoader.instanceNumber,0, 0, 0);
 
-            /* for (auto j = 0; j < indirectCommands.size(); j++)
-            {
-                vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, j * 
-                sizeof(VkDrawIndexedIndirectCommand), 1, sizeof(VkDrawIndexedIndirectCommand));
-            }
- */
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
         vkCmdEndRenderPass(commandBuffer);
@@ -217,7 +210,7 @@ namespace Minerva
             throw std::runtime_error("failed to acquire swap chain image!");
         }
         UpdateIndexBuffer();
-        //UpdateVertexBuffer();
+        UpdateVertexBuffer();
         UpdateUniformBuffer(currentFrame);
         vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
         vkResetCommandBuffer(commandBuffers[currentFrame],  0);
@@ -292,26 +285,25 @@ namespace Minerva
 
     void Renderer::CreateVertexBuffer()
     {
-        VkDeviceSize bufferSize = sizeof(engineModLoader.sceneMeshes[0].vertices[0]) * 
-        engineModLoader.sceneMeshes[0].vertices.size();
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-         | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+        Mesh* mesh = &engineModLoader.sceneMeshes[0];
+        VkDeviceSize bufferSize = sizeof(engineModLoader.sceneMeshes[0].vertices[0]) 
+        * engineModLoader.sceneMeshes[0].vertices.size();
 
-        void* data;
-        vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, engineModLoader.sceneMeshes[0].vertices.data(), (size_t) bufferSize);
-        vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
+        mesh->meshBuffer.size = bufferSize;
 
-        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, engineModLoader.sceneMeshes[0].meshBuffer.vertexBuffer, 
-        engineModLoader.sceneMeshes[0].meshBuffer.vertexBufferMemory);
-        CopyBuffer(stagingBuffer, engineModLoader.sceneMeshes[0].meshBuffer.vertexBuffer, bufferSize);
+        mesh->meshBuffer.vertexBuffer.resize(MAX_FRAMES_IN_FLIGHT);
+        mesh->meshBuffer.vertexBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
+        mesh->meshBuffer.vertexBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
-        //destroy the staging buffer
-        vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
-        vkFreeMemory(engineDevice.logicalDevice, stagingBufferMemory, nullptr);
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            engineRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+            mesh->meshBuffer.vertexBuffer[i], mesh->meshBuffer.vertexBufferMemory[i]);
+
+            vkMapMemory(engineDevice.logicalDevice, mesh->meshBuffer.vertexBufferMemory[i], 0,
+            bufferSize, 0, &mesh->meshBuffer.vertexBufferMapped[i]);
+        }
     }
 
     void Renderer::CreateInstanceBuffer()
@@ -702,24 +694,9 @@ namespace Minerva
     void Renderer::UpdateVertexBuffer()
     {
         Mesh* mesh = &engineModLoader.sceneMeshes[0];
-
         VkDeviceSize bufferSize = sizeof(mesh->vertices[0]) * mesh->vertices.size();
 
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingMemory;
-
-        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-        | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingMemory);
-         
-        void* data;
-        vkMapMemory(engineDevice.logicalDevice, stagingMemory, 0, bufferSize,0, &data);
-        memcpy(data, mesh->vertices.data(),(size_t) bufferSize);
-        vkUnmapMemory(engineDevice.logicalDevice,stagingMemory);
-
-        CopyBuffer(stagingBuffer, mesh->meshBuffer.vertexBuffer, bufferSize);
-
-        vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
-        vkFreeMemory(engineDevice.logicalDevice, stagingMemory, nullptr);
+        memcpy(mesh->meshBuffer.vertexBufferMapped[currentFrame], mesh->vertices.data(),(size_t) bufferSize);
     }
 
     void Renderer::CreateIndexBuffer()

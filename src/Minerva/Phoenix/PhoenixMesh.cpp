@@ -32,7 +32,7 @@ namespace Phoenix
             LOD currentLod;
             currentLod.lod = lodIndex;
             currentLod.lodVertexBuffer = prevLod->lodVertexBuffer;
-            
+            uniqueIndex.clear();
             for(int i = 0; i < prevLod->groups.size(); i++) 
             {
                 std::vector<uint32_t> groupIndexBuffer;
@@ -41,7 +41,7 @@ namespace Phoenix
 
                 /*In this case the merge operation fills the local Index Buffers of the
                 previous lod groups*/
-                Merge(*group,*prevLod,groupIndexBuffer); 
+                Merge(*group,*prevLod,groupIndexBuffer, uniqueIndex); 
                 auto simplifiedCount = Simplify(groupIndexBuffer,vertices, currentLod, outError);
                 Split(currentLod, groupIndexBuffer,outError,prevLod, group, maxChildrenError); 
             }
@@ -66,10 +66,11 @@ namespace Phoenix
 
         LOD* lastLod =  &lods[lods.size() - 1];
         
+        uniqueIndex.clear();
         for(auto& group : lastLod->groups) 
         {
             std::vector<uint32_t> groupIndexBuffer;            
-            Merge(group,*lastLod,groupIndexBuffer);
+            Merge(group,*lastLod,groupIndexBuffer, uniqueIndex);
         }
 
         for(const auto& pMeshlet : lastLod->lodVerticesMeshlets)
@@ -235,7 +236,8 @@ namespace Phoenix
         return currentLod.groups;
     }
 
-    void PhoenixMesh::Merge(const MeshletGroup& group, LOD& prevLod, std::vector<uint32_t>& groupIndexBuffer)
+    void PhoenixMesh::Merge(const MeshletGroup& group, LOD& prevLod, std::vector<uint32_t>& groupIndexBuffer, 
+    std::unordered_set<uint32_t>& uniqueIndex)
     {
         
         std::vector<glm::vec3> meshletCenters;
@@ -243,12 +245,16 @@ namespace Phoenix
         {
             glm::vec3 meshletCenter {0.0f};
             PhoenixMeshlet* meshlet = &prevLod.lodVerticesMeshlets[meshletIndex];
-            std::unordered_set<uint32_t> uniqueIndex;
+            SetColor(*meshlet);
+            
             for(size_t j = 0; j < meshlet->meshletData.triangle_count * 3; ++j) 
             {
                 uint32_t index = prevLod.lodMeshletsClusterIndex[prevLod.lodMeshletsClusterTriangle
                 [meshlet->meshletData.triangle_offset + j] + meshlet->meshletData.vertex_offset];
-
+                if(uniqueIndex.insert(index).second)
+                {
+                    meshlet->meshletVertexBuffer.emplace_back(prevLod.lodVertexBuffer[index]);
+                }
                 meshlet->meshletIndexBuffer.emplace_back(index);
                 groupIndexBuffer.emplace_back(index);    
             }  
@@ -474,18 +480,21 @@ namespace Phoenix
         }
     }
 
-    void PhoenixMesh::ColourGroups(MeshletGroup& group, std::vector<MINERVA_VERTEX> &vertices)
+    void PhoenixMesh::ColourGroups(PhoenixMeshlet& meshlet, std::vector<MINERVA_VERTEX> &vertices)
     {        
-        /* for(int i = 0; i < group.groupIndexBuffer.size(); i++)
+        for(int i = 0; i < meshlet.meshletIndexBuffer.size(); i++)
         {
-            vertices[group.groupIndexBuffer[i]].color = group.groupColor;
+            uint32_t index = meshlet.meshletIndexBuffer[i];
+            if(index >= vertices.size())
+                continue;
+            vertices[index].color = meshlet.meshletColor;
             
-        } */
+        }
     }
 
-    void PhoenixMesh::SetColor(MeshletGroup &group)
+    void PhoenixMesh::SetColor(PhoenixMeshlet& meshlet)
     {
-        /* std::random_device rd;
+        std::random_device rd;
         std::mt19937 gen(rd()); 
 
         float min = 0.15f; 
@@ -495,6 +504,6 @@ namespace Phoenix
         float r = dist(gen);
         float g = dist(gen);
         float b = dist(gen);
-        group.groupColor = glm::vec3(r, g, b); */
+        meshlet.meshletColor = glm::vec3(r, g, b);
     }
 }

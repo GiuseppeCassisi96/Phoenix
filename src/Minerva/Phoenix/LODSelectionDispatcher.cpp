@@ -16,8 +16,8 @@ namespace Phoenix
     }
     std::vector<uint32_t> LODSelectionDispatcher::LodSelector(std::vector<PhoenixMeshlet>&  totalMeshlets, 
     int width, float hFov, const LOD& lastLOD, const glm::vec3& instancePos,float& avgLOD, 
-    std::vector<MINERVA_VERTEX>& vertexBuffer, int groupSelector, Minerva::Transformation& tr,
-    Minerva::SampleType currentSample)
+    std::vector<MINERVA_VERTEX>& vertexBuffer, Minerva::Transformation& tr,
+    Minerva::SampleType currentSample, PhoenixMesh& mesh, std::vector<MINERVA_VERTEX>& globalVertBuffer)
     {
         std::vector<uint32_t> newIndexBuffer;
         
@@ -52,15 +52,22 @@ namespace Phoenix
 
                          
         } 
-        //groupsSelected.insert(groupSelector % lastLOD.groups.size());
+
         //CPU side 
         for(const auto& meshletID : meshletsSelected)
         {
             PhoenixMeshlet* currentPMeshlet = &totalMeshlets[meshletID];    
+            
             newIndexBuffer.insert(newIndexBuffer.end(), currentPMeshlet->meshletIndexBuffer.begin(),
-            currentPMeshlet->meshletIndexBuffer.end());  
+            currentPMeshlet->meshletIndexBuffer.end()); 
+
+            vertexBuffer.insert(vertexBuffer.end(), currentPMeshlet->meshletVertexBuffer.begin(),
+            currentPMeshlet->meshletVertexBuffer.end());
+
+            mesh.ColourGroups(*currentPMeshlet, globalVertBuffer);
             avgLOD += currentPMeshlet->lod;
         }
+
         avgLOD /= meshletsSelected.size();
         if(newIndexBuffer.size() <= 0)
             avgLOD = -1.0f;
@@ -89,12 +96,6 @@ namespace Phoenix
         const float div = glm::sqrt(d2 - r*r);
         float screenSpaceError = (width / 2.0f * cotHalfFov * r) / div;
         return screenSpaceError;
-
-        
-        //Bound center in View space 
-        /* float d = bound.center.z - bound.radius;
-        float screenSpaceError =  (groupError * width) / (2 * d * tan(hFov/2));
-        return glm::abs(screenSpaceError); */
 
     }
 }

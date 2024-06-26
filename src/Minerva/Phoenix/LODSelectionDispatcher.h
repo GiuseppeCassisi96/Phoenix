@@ -36,8 +36,8 @@ namespace Phoenix
 
         std::vector<uint32_t> LodSelector(std::vector<PhoenixMeshlet>&  totalMeshlets, int width, float hFov, 
         const LOD& lastLOD, const glm::vec3& instancePos, float& avgLOD, 
-        std::vector<MINERVA_VERTEX>& vertexBuffer, int groupSelector, Minerva::Transformation& tr,
-        Minerva::SampleType currentSample);
+        std::vector<MINERVA_VERTEX>& vertexBuffer, Minerva::Transformation& tr,
+        Minerva::SampleType currentSample, PhoenixMesh& mesh, std::vector<MINERVA_VERTEX>& globalVertBuffer);
 
         float ComputeScreenSpaceError(PhoenixBound bound,float groupError,int width, 
         float hFov, const glm::vec3& instancePos, float distanceMul, const glm::mat4& modelView);
