@@ -5,8 +5,9 @@
 
 namespace Minerva
 {
-    void ModelLoader::LoadModel(std::string fileName)
+    void ModelLoader::LoadModel(std::string fileName, SampleType chosenType)
     {
+        sample = chosenType;
         Assimp::Importer importer;
         const aiScene *scene = importer.ReadFile((MODELS_PATH + fileName).c_str(), 
         aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
@@ -52,6 +53,7 @@ namespace Minerva
             currentVertex.pos.x = mesh->mVertices[i].x;
             currentVertex.pos.y = mesh->mVertices[i].y;
             currentVertex.pos.z = mesh->mVertices[i].z;
+            currentVertex.pos *= sample.scale;
 
             currentVertex.color = glm::vec3 {0.0f};
 
@@ -98,7 +100,7 @@ namespace Minerva
         for(int i = 0; i < instanceNumber; i++)
         {   
             counter++;
-            instancesData[i].instancePos = glm::vec3(counter * type.distanceMultiplier ,-row * 30.0f, 0.0f);
+            instancesData[i].instancePos = glm::vec3(counter * type.distanceMultiplier ,-row * 200.0f, 0.0f);
             if(counter >= type.rowDim)
             {
                 counter = 0;

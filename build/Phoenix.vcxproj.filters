@@ -37,6 +37,9 @@
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Phoenix\PhoenixMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Phoenix\PhoenixWelzl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\src\Minerva\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

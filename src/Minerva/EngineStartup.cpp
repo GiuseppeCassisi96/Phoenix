@@ -19,6 +19,8 @@ namespace Minerva
     EngineCamera camera;
     MinervaUI engineUI;
     ModelLoader engineModLoader;
+    Phoenix::LODSelectionDispatcher dispatcher;
+    Phoenix::PhoenixMesh phoenixMesh; 
 
     template<typename T>
     void CreateUniformBuffers(UniformBuffers& UNBuffers)
@@ -51,21 +53,24 @@ namespace Minerva
     {
         samplesTest["0"].modelName = "bunny.obj";
         samplesTest["0"].textureName = "statueColor.jpeg";
-        samplesTest["0"].scale = 130.0f;
+        samplesTest["0"].scale = 600.0f;
         samplesTest["0"].rowDim = 20;
         samplesTest["0"].distanceMultiplier = 30.0f;
+        samplesTest["0"].tError = 0.4f;
 
-        samplesTest["1"].modelName = "lucy.obj";
+        samplesTest["1"].modelName = "dancer.obj";
         samplesTest["1"].textureName = "statueColor.jpeg";
-        samplesTest["1"].scale = 0.13f;
+        samplesTest["1"].scale = 1.0f;
         samplesTest["1"].rowDim = 20;
         samplesTest["1"].distanceMultiplier = 60.0f;
+        samplesTest["1"].tError = 1.0f;
 
-        samplesTest["2"].modelName = "happy.obj";
+        samplesTest["2"].modelName = "teapot.fbx";
         samplesTest["2"].textureName = "statueColor.jpeg";
-        samplesTest["2"].scale = 300.0f;
+        samplesTest["2"].scale = 20.0f;
         samplesTest["2"].rowDim = 20;
         samplesTest["2"].distanceMultiplier = 60.0f;
+        samplesTest["2"].tError = 0.2f;
 
         samplesTest["3"].animNumber = 3;
         samplesTest["3"].animName.emplace_back("monsterIdle.fbx");
@@ -73,30 +78,24 @@ namespace Minerva
         samplesTest["3"].animName.emplace_back("monsterRun.fbx");
         samplesTest["3"].modelName = "monster.fbx";
         samplesTest["3"].textureName = "monsterColor.png";
-        samplesTest["3"].scale = 0.2f;
+        samplesTest["3"].scale = 1.0f;
         samplesTest["3"].rowDim = 40;
-        samplesTest["3"].distanceMultiplier = 45.0f;
-
-        
-
-         
+        samplesTest["3"].distanceMultiplier = 100.0f;
+        samplesTest["3"].tError = 13.5f;
+   
         std::string key;
-        int lodSelected = 0;
 
         std::cout << "Choose the model which you want rendered: \n"
         << "Insert '0' to render the bunny static model\n"
-        << "Insert '1' to render the lucy static model\n"
-        << "Insert '2' to render the happy budda static model\n"
+        << "Insert '1' to render the dancer static model\n"
+        << "Insert '2' to render the teapot static model\n"
         << "Insert '3' to render the skeletal model\n" ;
         std::cin >> key;
         assert(key == "1" || key == "0" || key == "2" || key == "3");
         std::cout << "Select the instance number: ";
         std::cin >> engineModLoader.instanceNumber;
-        std::cout << "Select the LOD between 0 and 5: ";
-        assert(lodSelected >= 0 && lodSelected <= 5);
-        std::cin >> lodSelected;
 
-        SampleType choosenSample = samplesTest[key];
+        choosenSample = samplesTest[key];
 
         windowInstance.EngineInitWindow(windowInstance.WIDTH, windowInstance.HEIGHT);
         engineInstance.CreateInstance();
@@ -118,7 +117,7 @@ namespace Minerva
         texture.CreateTextureImageView();
         texture.CreateTextureSampler();
         
-        engineModLoader.LoadModel(choosenSample.modelName);
+        engineModLoader.LoadModel(choosenSample.modelName, choosenSample);
 
         if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
         {
@@ -132,24 +131,16 @@ namespace Minerva
             }
             animator.CreateAnimator(&animations[0]);
         }
-        Phoenix::PhoenixMesh phoenixMesh; 
-        Phoenix::LODSelectionDispatcher dispatcher;
+        
+        
         auto startTime = std::chrono::high_resolution_clock::now();
-        phoenixMesh.BuildLodsHierarchy(engineModLoader.sceneMeshes[0].vertices, 
-        engineModLoader.sceneMeshes[0].indices);
+        phoenixMesh.BuildLodsHierarchy(engineModLoader.sceneMeshes[0].vertices, engineModLoader.sceneMeshes[0].indices);
         auto endTime = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> amount = endTime - startTime;
         std::cout << "S: " << amount << "\n";
-        
-        engineModLoader.sceneMeshes[0].indices = phoenixMesh.lods[lodSelected].lodIndexBuffer;
-        for(auto group : phoenixMesh.lods[lodSelected].groups)
-        {
-            phoenixMesh.ColourMeshelets(group,engineModLoader.sceneMeshes[0].vertices);
-        }
 
-        engineModLoader.info.numberOfVertices =  phoenixMesh.lods[lodSelected].vertexNumber.size();
-        dispatcher.PrepareComputeData(phoenixMesh.lods);
-        engineRenderer.PrepareIndirectData(phoenixMesh.lods[lodSelected]);
+        dispatcher.PrepareComputeData(phoenixMesh.totalMeshlets);
+        //engineRenderer.PrepareIndirectData(engineModLoader.sceneMeshes[0].indices);
         engineModLoader.PrepareInstanceData(choosenSample);
         engineRenderer.CreateVertexBuffer();
         engineRenderer.CreateInstanceBuffer();
@@ -178,15 +169,36 @@ namespace Minerva
     }
     void EngineStartup::Loop()
     {
+        size_t maxSize = engineModLoader.sceneMeshes[0].indices.size();
+        //engineModLoader.sceneMeshes[0].indices.clear();
         
-        while (!glfwWindowShouldClose(windowInstance.window)) {
+        while (!glfwWindowShouldClose(windowInstance.window)) 
+        {
             
             glfwPollEvents();
             if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
                 animator.UpdateAnimation(camera.deltaTime);
             camera.ProcessUserInput(windowInstance.window);
-            engineRenderer.DrawFrame();
+            glm::mat4 modelMatrix = engineTransform.ubo.view  * engineTransform.ubo.model;
+            std::vector<Mesh::Vertex> vertBuffer;
             
+            engineModLoader.sceneMeshes[0].indices = dispatcher.LodSelector(phoenixMesh.totalMeshlets, 
+            windowInstance.WIDTH, glm::radians(45.0f), phoenixMesh.lods[0], 
+            engineModLoader.instancesData[0].instancePos, avgLOD, vertBuffer, windowInstance.count,
+            engineTransform, choosenSample);
+
+            if(engineModLoader.sceneMeshes[0].indices.size() > maxSize)
+            {
+                std::cout << "TOO MUCH!!!\n";
+                engineModLoader.sceneMeshes[0].indices.resize(maxSize);
+            }
+            assert(engineModLoader.sceneMeshes[0].indices.size() <= maxSize);
+            //engineModLoader.sceneMeshes[0].vertices = vertBuffer;
+            //engineModLoader.sceneMeshes[0].indices = phoenixMesh.lods[0].lodIndexBuffer;
+            engineModLoader.info.numberOfVertices = vertBuffer.size();
+            engineModLoader.info.numberOfPolygons = engineModLoader.sceneMeshes[0].indices.size() / 3;
+            engineRenderer.DrawFrame(); 
+            avgLOD = 0.0f;
             
         }
         vkDeviceWaitIdle(engineDevice.logicalDevice);

@@ -13,6 +13,7 @@ namespace Minerva
         float scale;
         int rowDim;
         float distanceMultiplier;
+        float tError;
     };
 
     struct MeshInfo
@@ -24,6 +25,7 @@ namespace Minerva
     class ModelLoader
     {
     public:
+        SampleType sample;
         MeshInfo info;
         int instanceNumber;
         std::vector<InstanceData> instancesData;
@@ -31,7 +33,7 @@ namespace Minerva
         std::vector<Mesh> sceneMeshes;
         std::map<std::string, Mesh::BoneInfo> infoBoneMap;
         int boneNumber = 0;
-        void LoadModel(std::string fileName);
+        void LoadModel(std::string fileName, SampleType chosenType);
         void ProcessAssimpNode(aiNode *node, const aiScene *scene);
         Mesh ProcessAssimpMesh(aiMesh *mesh, const aiScene *scene);
         void PrepareInstanceData(SampleType type);

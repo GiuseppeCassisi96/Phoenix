@@ -7,11 +7,13 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#define MAX_BONE_PER_VERTEX 4
-#define MAX_BONES 100
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/dual_quaternion.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#define MAX_BONE_PER_VERTEX 4
+#define MAX_BONES 100
 
 namespace Minerva
 {
@@ -112,8 +114,9 @@ namespace Minerva
         {
             VkBuffer vertexBuffer = VK_NULL_HANDLE;
             VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
-            VkBuffer indexBuffer = VK_NULL_HANDLE;
-            VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
+            std::vector<VkBuffer> indexBuffer;
+            std::vector<VkDeviceMemory> indexBufferMemory;
+            std::vector<void*> indexBufferMapped;
             size_t size = 0;
         };
 

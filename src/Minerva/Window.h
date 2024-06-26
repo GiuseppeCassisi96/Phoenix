@@ -16,6 +16,7 @@ namespace Minerva
         const int WIDTH = 1920, HEIGHT = 1080;
         VkSurfaceKHR windowSurface = VK_NULL_HANDLE;  
         GLFWwindow* window = nullptr;
+        int count = 0;
         bool isCursorDisabled = true;
         /// @brief Create and initialize the window according to some params
         /// @param width Is the width of window 

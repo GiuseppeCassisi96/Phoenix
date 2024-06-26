@@ -1,4 +1,5 @@
 #pragma once
+#include "PhoenixWelzl.h"
 #include "vector"
 #include "Meshoptimizer/src/meshoptimizer.h"
 #include "Minerva/Mesh.h"
@@ -7,8 +8,11 @@
 #include <unordered_set>
 #include "metis.h"
 #include <random>
-#define MESHLET_VERTICES_NUMBER 128
-#define MESHLET_TRIANGLE_NUMBER 256
+#include <map>
+#include <set>
+#include "robin_hood.h"
+#define MESHLET_VERTICES_NUMBER 255
+#define MESHLET_TRIANGLE_NUMBER 512
 #define MAX_LOD_NUMBER 5
 #define MAX_GROUP_NUMBER 4
 #define MINERVA_VERTEX Minerva::Mesh::Vertex
@@ -16,39 +20,51 @@
 post*/
 namespace Phoenix
 {
-    struct MeshletEdge 
+
+    static void HashCombine(std::size_t& seed, const std::size_t& v) 
     {
-        MeshletEdge(size_t a, size_t b): first((std::min)(a, b)), second((std::max)(a, b)) {}
+        seed ^= robin_hood::hash_int(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    }
+    struct Edge 
+    {
+        Edge(size_t a, size_t b): firstVertex((std::min)(a, b)), secondVertex((std::max)(a, b)) {}
 
-        bool operator==(const MeshletEdge& other) const = default;
+        bool operator==(const Edge& other) const = default;
 
-        const size_t first;
-        const size_t second;
+        const size_t firstVertex;
+        const size_t secondVertex;
     };
 
-    struct MeshletEdgeHasher 
+    struct EdgeHasher 
     {
         //I need to define an hasing function
-        size_t operator()(const MeshletEdge& edge) const 
+        size_t operator()(const Edge& edge) const 
         {
-            std::hash<size_t> t;
-            return (t._Do_hash(edge.first)) | (t._Do_hash(edge.second));
+
+            std::size_t h = edge.firstVertex;
+            HashCombine(h, edge.secondVertex);
+            return h;
         }
     };
     
     struct PhoenixMeshlet
     {
+        std::vector<uint32_t> meshletIndexBuffer;
         meshopt_Meshlet meshletData;
-        meshopt_Bounds bound;
+        idx_t meshletID;  
+        PhoenixBound parentBound;
+        PhoenixBound bound;
+        float error = 0.0f;
+        float parentError = 0.0f;
+        int lod = 0;
+        glm::vec3 groupColor;
     };
 
     struct MeshletGroup
     {
-        std::vector<size_t> meshlets;
-        std::vector<uint32_t> localGroupIndexBuffer;
-        std::unordered_set<idx_t> parentsGroup;
-        float groupError = 0.0f;
+        std::unordered_set<size_t> meshlets;
     };
+
 
     struct LOD
     {
@@ -56,31 +72,28 @@ namespace Phoenix
         std::vector<uint32_t> lodMeshletsClusterIndex;
         std::vector<unsigned char> lodMeshletsClusterTriangle;
         std::vector<MeshletGroup> groups;
-        std::vector<uint32_t> lodIndexBuffer;
         std::vector<MINERVA_VERTEX> lodVertexBuffer;
-        std::unordered_map<size_t, idx_t> meshletToGroup;
-        std::unordered_set<uint32_t> vertexNumber;
         uint32_t lod = 0;
-        float lodError;
-        
     };
 
     class PhoenixMesh
     {
     public:
         std::vector<LOD> lods;
-        int lodIndex = 0;
-        int groupNumber = MAX_GROUP_NUMBER;
+        PhoenixWelzl welzl;
+        int meshletID = 0;
+        std::vector<PhoenixMeshlet> totalMeshlets;
         
-        void ColourMeshelets(MeshletGroup& group, std::vector<MINERVA_VERTEX>& vertices);
+        void ColourGroups(MeshletGroup& group, std::vector<MINERVA_VERTEX>& vertices);
+        void SetColor(MeshletGroup& group);
         void BuildLodsHierarchy(std::vector<MINERVA_VERTEX>& vertices, std::vector<uint32_t> &indices);
         std::vector<MeshletGroup> Group(LOD& currentLod, LOD* prevLod = nullptr);
-        void Merge(MeshletGroup& group, LOD& currentLod, std::vector<uint32_t>& localGroupIndexBuffer);
-        size_t Simplify(std::vector<uint32_t>& localGroupIndexBuffer, LOD& currentLod, float& outError);
-        void Split(LOD& currentLod, std::vector<uint32_t> indexBuffer, 
-        LOD* prevLod = nullptr, idx_t groupIndex = 0);
-        void ApplyReduction(std::vector<uint32_t>& simplifiedIndexBuffer, const LOD& currentLod);
-        
+        void Merge(const MeshletGroup& group, LOD& prevLod, std::vector<uint32_t>& groupIndexBuffer);
+        size_t Simplify(std::vector<uint32_t>& groupIndexBuffer, const std::vector<MINERVA_VERTEX>& groupVertexBuffer, 
+        LOD& currentLod, float& outError);
+        void Split(LOD& currentLod, std::vector<uint32_t> groupIndexBuffer, float error, LOD* prevLod, 
+        MeshletGroup* group, float& maxChildrenError);
+        void Split(LOD& firstLod, std::vector<uint32_t> indexBuffer);
         PhoenixMesh() = default;
         ~PhoenixMesh() = default;
     };

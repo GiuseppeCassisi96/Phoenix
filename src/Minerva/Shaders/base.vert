@@ -33,18 +33,18 @@ void main() {
     {
         if(inBoneID[i] == -1) 
         {
-            totalPosition = vec4((inPosition * inOffsetScale) + inOffsetPos,1.0);
+            totalPosition = vec4((inPosition) + inOffsetPos,1.0);
             break;
         }
             
         if(inBoneID[i] >= MAX_BONES) 
         {
-            totalPosition = vec4((inPosition * inOffsetScale) + inOffsetPos,1.0);
+            totalPosition = vec4((inPosition) + inOffsetPos,1.0);
             break;
         }
         vec4 localPosition = anim.finalBonesMatrices[inBoneID[i]] * 
         vec4(inPosition, 1.0);
-        totalPosition += ((localPosition * inOffsetScale) + vec4(inOffsetPos, 1.0)) * inWeight[i];
+        totalPosition += ((localPosition) + vec4(inOffsetPos, 1.0)) * inWeight[i];
     }
 
     gl_Position = ubo.proj * ubo.view * ubo.model * totalPosition;

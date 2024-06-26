@@ -1,0 +1,13 @@
+# Blender 4.1.0 MTL File: 'None'
+# www.blender.org
+
+newmtl default
+Ns 39.999996
+Ka 0.100000 0.100000 0.100000
+Kd 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Bump -bm 1.000000 C:/figure-of-a-dancer-150k-4096-normals.jpg

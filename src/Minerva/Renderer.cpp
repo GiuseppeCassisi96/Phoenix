@@ -159,9 +159,10 @@ namespace Minerva
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
+        
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);         
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, enginePipeline.graphicsPipeline);
-
+            
             VkViewport viewport{};
             viewport.x = 0.0f;
             viewport.y = 0.0f;
@@ -181,16 +182,18 @@ namespace Minerva
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindVertexBuffers(commandBuffer, 1, 1, &engineModLoader.instanceBuffer.buffer, offsets);
-            vkCmdBindIndexBuffer(commandBuffer, mesh->meshBuffer.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(commandBuffer, mesh->meshBuffer.indexBuffer[currentFrame], 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
             enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->indices.size()), 
+            engineModLoader.instanceNumber,0, 0, 0);
 
-            for (auto j = 0; j < indirectCommands.size(); j++)
+            /* for (auto j = 0; j < indirectCommands.size(); j++)
             {
                 vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, j * 
                 sizeof(VkDrawIndexedIndirectCommand), 1, sizeof(VkDrawIndexedIndirectCommand));
             }
-
+ */
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
         vkCmdEndRenderPass(commandBuffer);
@@ -200,9 +203,9 @@ namespace Minerva
     }
     void Renderer::DrawFrame()
     {
+        
         vkWaitForFences(engineDevice.logicalDevice, 1, 
         &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-    
         uint32_t imageIndex;
         VkResult result = vkAcquireNextImageKHR(engineDevice.logicalDevice, engineDevice.swapChain,
          UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -213,11 +216,14 @@ namespace Minerva
         } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
-        
+        UpdateIndexBuffer();
+        //UpdateVertexBuffer();
         UpdateUniformBuffer(currentFrame);
         vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
         vkResetCommandBuffer(commandBuffers[currentFrame],  0);
         RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+
+        
         
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -257,7 +263,6 @@ namespace Minerva
         }
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-    
     }
 
     void Renderer::CreateSyncObjects()
@@ -331,32 +336,6 @@ namespace Minerva
         CopyBuffer(stagingBuffer, engineModLoader.instanceBuffer.buffer, bufferSize);
 
         //destroy the staging buffer
-        vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
-        vkFreeMemory(engineDevice.logicalDevice, stagingBufferMemory, nullptr);
-    }
-
-    void Renderer::CreateIndexBuffer()
-    {
-        VkDeviceSize bufferSize = sizeof(engineModLoader.sceneMeshes[0].indices[0]) * 
-        engineModLoader.sceneMeshes[0].indices.size();
-
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-        void* data;
-        vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, engineModLoader.sceneMeshes[0].indices.data(), (size_t) bufferSize);
-        vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
-
-        
-        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, engineModLoader.sceneMeshes[0].meshBuffer.indexBuffer, 
-        engineModLoader.sceneMeshes[0].meshBuffer.indexBufferMemory);
-
-        CopyBuffer(stagingBuffer, engineModLoader.sceneMeshes[0].meshBuffer.indexBuffer, bufferSize);
-
         vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
         vkFreeMemory(engineDevice.logicalDevice, stagingBufferMemory, nullptr);
     }
@@ -647,14 +626,14 @@ namespace Minerva
         );
     }
 
-    void Renderer::PrepareIndirectData(Phoenix::LOD& lod)
+    void Renderer::PrepareIndirectData(std::vector<uint32_t>& indexBuffer)
     {
         int amountForEachMesh = 0;
         for(int i = 0; i < 1; i++)
         {
             VkDrawIndexedIndirectCommand indirectCmd{};
             indirectCmd.firstIndex = 0;
-            indirectCmd.indexCount = lod.lodIndexBuffer.size();
+            indirectCmd.indexCount = indexBuffer.size();
             indirectCmd.firstInstance = 0;
             indirectCmd.instanceCount = engineModLoader.instanceNumber;
             indirectCommands.emplace_back(indirectCmd);
@@ -711,6 +690,60 @@ namespace Minerva
         colorImageView = engineDevice.CreateImageView(colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
+    void Renderer::UpdateIndexBuffer()
+    {
+        Mesh* mesh = &engineModLoader.sceneMeshes[0];
+        VkDeviceSize bufferSize = sizeof(mesh->indices[0]) * mesh->indices.size();
+
+        memcpy(mesh->meshBuffer.indexBufferMapped[currentFrame], mesh->indices.data(),(size_t) bufferSize);
+
+    }
+
+    void Renderer::UpdateVertexBuffer()
+    {
+        Mesh* mesh = &engineModLoader.sceneMeshes[0];
+
+        VkDeviceSize bufferSize = sizeof(mesh->vertices[0]) * mesh->vertices.size();
+
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingMemory;
+
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+        | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingMemory);
+         
+        void* data;
+        vkMapMemory(engineDevice.logicalDevice, stagingMemory, 0, bufferSize,0, &data);
+        memcpy(data, mesh->vertices.data(),(size_t) bufferSize);
+        vkUnmapMemory(engineDevice.logicalDevice,stagingMemory);
+
+        CopyBuffer(stagingBuffer, mesh->meshBuffer.vertexBuffer, bufferSize);
+
+        vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, stagingMemory, nullptr);
+    }
+
+    void Renderer::CreateIndexBuffer()
+    {
+        Mesh* mesh = &engineModLoader.sceneMeshes[0];
+        VkDeviceSize bufferSize = sizeof(engineModLoader.sceneMeshes[0].indices[0]) 
+        * engineModLoader.sceneMeshes[0].indices.size();
+
+        mesh->meshBuffer.size = bufferSize;
+
+        mesh->meshBuffer.indexBuffer.resize(MAX_FRAMES_IN_FLIGHT);
+        mesh->meshBuffer.indexBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
+        mesh->meshBuffer.indexBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            engineRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+            mesh->meshBuffer.indexBuffer[i], mesh->meshBuffer.indexBufferMemory[i]);
+
+            vkMapMemory(engineDevice.logicalDevice, mesh->meshBuffer.indexBufferMemory[i], 0,
+            bufferSize, 0, &mesh->meshBuffer.indexBufferMapped[i]);
+        }
+    }
     void Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, 
     VkBuffer &buffer, VkDeviceMemory &bufferMemory)
     {
@@ -742,12 +775,13 @@ namespace Minerva
         }
     }
 
-    void Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+    void Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t destOffset)
     {
         VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
         VkBufferCopy copyRegion{};
         copyRegion.size = size;
+        copyRegion.srcOffset = destOffset;
         vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
         EndSingleTimeCommands(commandBuffer);

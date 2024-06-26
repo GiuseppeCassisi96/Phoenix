@@ -58,11 +58,10 @@ namespace Minerva
         void CreateSyncObjects();
         void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
         VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-        void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+        void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t destOffset = 0);
         void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
         void CreateVertexBuffer();
         void CreateInstanceBuffer();
-        void CreateIndexBuffer();
         void CreateDescriptorSetLayout();
         void CreateDescriptorPool();
         void CreateDescriptorSets();
@@ -75,10 +74,13 @@ namespace Minerva
         VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, 
         VkImageTiling tiling, VkFormatFeatureFlags features);
         VkFormat FindDepthFormat();
-        void PrepareIndirectData(Phoenix::LOD& lod);
+        void PrepareIndirectData(std::vector<uint32_t>& indexBuffer);
         bool HasStencilComponent(VkFormat format);
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         void CreateColorResources();
+        void UpdateIndexBuffer();
+        void UpdateVertexBuffer();
+        void CreateIndexBuffer();
 
         Renderer() = default;
         ~Renderer();

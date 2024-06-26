@@ -52,6 +52,11 @@ namespace Minerva
             }
                 
         }
+
+        if(key == GLFW_KEY_ENTER && action == GLFW_PRESS)
+        { 
+            count++;
+        }
     }
 
     Window::~Window()

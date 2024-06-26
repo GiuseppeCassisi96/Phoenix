@@ -7,9 +7,9 @@ namespace Minerva
 {
     struct UniformBufferObject 
     {
-        glm::mat4 model;
-        glm::mat4 view;
-        glm::mat4 proj;
+        glm::mat4 model {1.0f};
+        glm::mat4 view {1.0f};
+        glm::mat4 proj {1.0f};
     };
     class Transformation
     {
@@ -25,7 +25,7 @@ namespace Minerva
     public:
         glm::vec3 cameraPos;
         glm::vec3 cameraRight, cameraForward, cameraUp;
-        glm::vec3 cameraDir;
+        //glm::vec3 cameraDir;
         float deltaTime, lastFrame;
         bool firstMouse = true;
         double yaw = -90.0f, pitch = 0.0f;

@@ -87,6 +87,7 @@ namespace Minerva
             ImGui::Text("Number of triangles: %d", engineModLoader.info.numberOfPolygons  * engineModLoader.instanceNumber);
             ImGui::Text("Number of vertices: %d", engineModLoader.info.numberOfVertices  * engineModLoader.instanceNumber);
             ImGui::Text("Number of instances: %d", engineModLoader.instanceNumber);
+            ImGui::Text("AvgLOD: %f", engine->avgLOD);
             if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
             {
                 if(ImGui::Button("Idle"))
