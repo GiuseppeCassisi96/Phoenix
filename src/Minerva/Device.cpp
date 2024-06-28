@@ -83,6 +83,11 @@ namespace Minerva
             return 0;
         }
 
+        if(!deviceFeatures.multiDrawIndirect)
+        {
+            return 0;
+        }
+
         //The tessellation shaders is a plus
         if (deviceFeatures.tessellationShader)
         {
@@ -219,6 +224,8 @@ namespace Minerva
         std::cout << "|   Device name: " << deviceProperties.deviceName << "    |\n";
         std::cout << "|   Driver: " << deviceProperties.driverVersion << "                                    |\n";
         std::cout << "|   Vendor ID: " << deviceProperties.vendorID << "                                       |\n";
+        if(deviceFeatures.multiDrawIndirect)
+        std::cout << "|   Multidraw Indirect: YES " << "                              |\n";   
         std::cout << "|_________________________________________________________|\n";
         std::cout << "\n\n";
     }

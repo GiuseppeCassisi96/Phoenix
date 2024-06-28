@@ -48,6 +48,7 @@ namespace Minerva
         VkImage colorImage;
         VkDeviceMemory colorImageMemory;
         VkImageView colorImageView;
+        std::vector<uint32_t> offsetsVec;
 
         void CreateRenderPass();
         void CreateFramebuffers();
@@ -74,7 +75,9 @@ namespace Minerva
         VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, 
         VkImageTiling tiling, VkFormatFeatureFlags features);
         VkFormat FindDepthFormat();
-        void PrepareIndirectData(std::vector<uint32_t>& indexBuffer);
+        void PrepareIndirectData(std::vector<uint32_t>& indexBuffer, std::vector<Mesh::Vertex>
+        vertexBuffer);
+        void UpdateIndirectData();
         bool HasStencilComponent(VkFormat format);
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         void CreateColorResources();

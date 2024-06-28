@@ -184,9 +184,12 @@ namespace Minerva
             vkCmdBindIndexBuffer(commandBuffer, mesh->meshBuffer.indexBuffer[currentFrame], 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
             enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->indices.size()), 
-            engineModLoader.instanceNumber,0, 0, 0);
-
+            if(engineDevice.deviceFeatures.multiDrawIndirect)
+            {
+                vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, 0, 
+                static_cast<uint32_t>(indirectCommands.size()), 
+                sizeof(VkDrawIndexedIndirectCommand));
+            }
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
         vkCmdEndRenderPass(commandBuffer);
@@ -211,6 +214,7 @@ namespace Minerva
         }
         UpdateIndexBuffer();
         UpdateVertexBuffer();
+        UpdateIndirectData();
         UpdateUniformBuffer(currentFrame);
         vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
         vkResetCommandBuffer(commandBuffers[currentFrame],  0);
@@ -285,9 +289,10 @@ namespace Minerva
 
     void Renderer::CreateVertexBuffer()
     {
+        //
         Mesh* mesh = &engineModLoader.sceneMeshes[0];
         VkDeviceSize bufferSize = sizeof(engineModLoader.sceneMeshes[0].vertices[0]) 
-        * engineModLoader.sceneMeshes[0].vertices.size();
+        * engineModLoader.sceneMeshes[0].vertices.size() * engineModLoader.instanceNumber;
 
         mesh->meshBuffer.size = bufferSize;
 
@@ -618,16 +623,17 @@ namespace Minerva
         );
     }
 
-    void Renderer::PrepareIndirectData(std::vector<uint32_t>& indexBuffer)
+    void Renderer::PrepareIndirectData(std::vector<uint32_t>& indexBuffer, std::vector<Mesh::Vertex>
+    vertexBuffer)
     {
-        int amountForEachMesh = 0;
-        for(int i = 0; i < 1; i++)
+        for(int i = 0; i < engineModLoader.instanceNumber; i++)
         {
             VkDrawIndexedIndirectCommand indirectCmd{};
-            indirectCmd.firstIndex = 0;
+            indirectCmd.firstIndex = i * indexBuffer.size();
+            indirectCmd.vertexOffset = i * vertexBuffer.size();
             indirectCmd.indexCount = indexBuffer.size();
-            indirectCmd.firstInstance = 0;
-            indirectCmd.instanceCount = engineModLoader.instanceNumber;
+            indirectCmd.firstInstance = i; //Costant
+            indirectCmd.instanceCount = 1; //Costant
             indirectCommands.emplace_back(indirectCmd);
         }
 
@@ -646,6 +652,27 @@ namespace Minerva
         CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indirectCommandsBuffer.buffer, 
         indirectCommandsBuffer.memory);
+        CopyBuffer(stagingBuffer, indirectCommandsBuffer.buffer, bufferSize);
+
+        //destroy the staging buffer
+        vkDestroyBuffer(engineDevice.logicalDevice, stagingBuffer, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, stagingBufferMemory, nullptr);
+    }
+
+    void Renderer::UpdateIndirectData()
+    {
+        //Buffer creation
+        VkDeviceSize bufferSize = indirectCommands.size() * sizeof(VkDrawIndexedIndirectCommand);
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+        | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+        void* data;
+        vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+            memcpy(data, indirectCommands.data(), (size_t) bufferSize);
+        vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
+
         CopyBuffer(stagingBuffer, indirectCommandsBuffer.buffer, bufferSize);
 
         //destroy the staging buffer
@@ -703,7 +730,7 @@ namespace Minerva
     {
         Mesh* mesh = &engineModLoader.sceneMeshes[0];
         VkDeviceSize bufferSize = sizeof(engineModLoader.sceneMeshes[0].indices[0]) 
-        * engineModLoader.sceneMeshes[0].indices.size();
+        * engineModLoader.sceneMeshes[0].indices.size() * engineModLoader.instanceNumber;
 
         mesh->meshBuffer.size = bufferSize;
 

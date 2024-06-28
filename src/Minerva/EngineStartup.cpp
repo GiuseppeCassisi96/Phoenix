@@ -54,22 +54,22 @@ namespace Minerva
         samplesTest["0"].modelName = "submarine.fbx";
         samplesTest["0"].textureName = "submarineColor.png";
         samplesTest["0"].scale = 500.0f;
-        samplesTest["0"].rowDim = 20;
-        samplesTest["0"].distanceMultiplier = 30.0f;
+        samplesTest["0"].rowDim = 5;
+        samplesTest["0"].distanceMultiplier = 600.0f;
         samplesTest["0"].tError = 0.5f;
 
         samplesTest["1"].modelName = "dancer.obj";
         samplesTest["1"].textureName = "dancerColor.jpg";
         samplesTest["1"].scale = 1.0f;
         samplesTest["1"].rowDim = 20;
-        samplesTest["1"].distanceMultiplier = 60.0f;
+        samplesTest["1"].distanceMultiplier = 1000.0f;
         samplesTest["1"].tError = 1.0f;
 
         samplesTest["2"].modelName = "teapot.fbx";
         samplesTest["2"].textureName = "teepotColor.png";
         samplesTest["2"].scale = 20.0f;
         samplesTest["2"].rowDim = 20;
-        samplesTest["2"].distanceMultiplier = 60.0f;
+        samplesTest["2"].distanceMultiplier = 600.0f;
         samplesTest["2"].tError = 0.2f;
 
         samplesTest["3"].animNumber = 3;
@@ -80,7 +80,7 @@ namespace Minerva
         samplesTest["3"].textureName = "monsterColor.png";
         samplesTest["3"].scale = 1.0f;
         samplesTest["3"].rowDim = 40;
-        samplesTest["3"].distanceMultiplier = 100.0f;
+        samplesTest["3"].distanceMultiplier = 400.0f;
         samplesTest["3"].tError = 10.5f;
    
         std::string key;
@@ -139,8 +139,8 @@ namespace Minerva
         std::chrono::duration<double> amount = endTime - startTime;
         std::cout << "S: " << amount << "\n";
 
-        dispatcher.PrepareComputeData(phoenixMesh.totalMeshlets);
-        //engineRenderer.PrepareIndirectData(engineModLoader.sceneMeshes[0].indices);
+        dispatcher.PrepareComputeData(phoenixMesh.totalMeshlets, choosenSample);
+        engineRenderer.PrepareIndirectData(engineModLoader.sceneMeshes[0].indices, engineModLoader.sceneMeshes[0].vertices);
         engineModLoader.PrepareInstanceData(choosenSample);
         engineRenderer.CreateVertexBuffer();
         engineRenderer.CreateInstanceBuffer();
@@ -169,28 +169,56 @@ namespace Minerva
     }
     void EngineStartup::Loop()
     {
-        size_t maxSize = engineModLoader.sceneMeshes[0].indices.size();
+        size_t indexMaxSize = engineModLoader.sceneMeshes[0].indices.size();
+        std::vector<Mesh::Vertex> instanceVertexBuffer = engineModLoader.sceneMeshes[0].vertices;
         
         while (!glfwWindowShouldClose(windowInstance.window)) 
         {
-            
+            engineModLoader.sceneMeshes[0].indices.clear();
+            engineModLoader.sceneMeshes[0].vertices.clear();
             glfwPollEvents();
             if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
                 animator.UpdateAnimation(camera.deltaTime);
             camera.ProcessUserInput(windowInstance.window);
-            glm::mat4 modelMatrix = engineTransform.ubo.view  * engineTransform.ubo.model;
-            std::vector<Mesh::Vertex> vertBuffer;
-            
-            engineModLoader.sceneMeshes[0].indices = dispatcher.LodSelector(phoenixMesh.totalMeshlets, 
-            windowInstance.WIDTH, glm::radians(45.0f), phoenixMesh.lods[0], 
-            engineModLoader.instancesData[0].instancePos, avgLOD, vertBuffer,
-            engineTransform, choosenSample,phoenixMesh, engineModLoader.sceneMeshes[0].vertices);
+            std::vector<size_t> multiOffset;
+            multiOffset.emplace_back(0);
+            int indexOffset = 0;
+            int vertexOffset = 0;
+            for(int i = 0; i < engineModLoader.instanceNumber; i++)
+            {   
+                std::vector<uint32_t> instanceIndexBuffer;
+                int numberOfVertex = 0;
+                //LOD selection LOD per meshlet 
+                instanceIndexBuffer = dispatcher.LodSelector(
+                phoenixMesh.totalMeshlets, windowInstance.WIDTH, glm::radians(45.0f),
+                engineModLoader.instancesData[i].instancePos,avgLOD, instanceVertexBuffer, 
+                engineTransform,phoenixMesh, numberOfVertex);
+                if(instanceIndexBuffer.size() > indexMaxSize)
+                    instanceIndexBuffer.resize(indexMaxSize);
 
-            if(engineModLoader.sceneMeshes[0].indices.size() > maxSize)
-                engineModLoader.sceneMeshes[0].indices.resize(maxSize); 
-            engineModLoader.info.numberOfVertices = vertBuffer.size();
-            engineModLoader.info.numberOfPolygons = engineModLoader.sceneMeshes[0].indices.size() / 3;
-            engineRenderer.DrawFrame(); 
+                //Indirect data update     
+                engineRenderer.indirectCommands[i].firstIndex = indexOffset;
+                engineRenderer.indirectCommands[i].vertexOffset = vertexOffset;
+                engineRenderer.indirectCommands[i].indexCount = static_cast<uint32_t>(instanceIndexBuffer.size());
+                indexOffset += static_cast<uint32_t>(instanceIndexBuffer.size());
+                vertexOffset += static_cast<uint32_t>(instanceVertexBuffer.size());
+
+                //Global Index Buffer computation 
+                engineModLoader.sceneMeshes[0].indices.insert(engineModLoader.sceneMeshes[0].indices.end(), 
+                instanceIndexBuffer.begin(), instanceIndexBuffer.end());
+
+                //Global Vertex Buffer computation 
+                engineModLoader.sceneMeshes[0].vertices.insert(engineModLoader.sceneMeshes[0].vertices.end(), 
+                instanceVertexBuffer.begin(), instanceVertexBuffer.end());
+                
+                //UI scene info update
+                engineModLoader.info.numberOfVertices += numberOfVertex;
+                engineModLoader.info.numberOfPolygons += instanceIndexBuffer.size() / static_cast<size_t>(3);
+            }
+            engineRenderer.DrawFrame();
+            
+            engineModLoader.info.numberOfVertices = 0;
+            engineModLoader.info.numberOfPolygons = 0;
             avgLOD = 0.0f;
             
         }

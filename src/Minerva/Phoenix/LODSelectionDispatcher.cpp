@@ -2,8 +2,10 @@
 #include <iostream>
 namespace Phoenix
 {
-    void LODSelectionDispatcher::PrepareComputeData(std::vector<PhoenixMeshlet>& totalMeshlet)
+    void LODSelectionDispatcher::PrepareComputeData(std::vector<PhoenixMeshlet>& totalMeshlet,
+    Minerva::SampleType currentSample)
     {
+        errorThreshold = currentSample.tError;
         /*Data:
         --GroupID
         --GroupError
@@ -15,14 +17,13 @@ namespace Phoenix
         */
     }
     std::vector<uint32_t> LODSelectionDispatcher::LodSelector(std::vector<PhoenixMeshlet>&  totalMeshlets, 
-    int width, float hFov, const LOD& lastLOD, const glm::vec3& instancePos,float& avgLOD, 
-    std::vector<MINERVA_VERTEX>& vertexBuffer, Minerva::Transformation& tr,
-    Minerva::SampleType currentSample, PhoenixMesh& mesh, std::vector<MINERVA_VERTEX>& globalVertBuffer)
+    int width, float hFov, const glm::vec3& instancePos,float& avgLOD, std::vector<MINERVA_VERTEX>& vertexBuffer,
+    Minerva::Transformation& tr, PhoenixMesh& mesh, int& vertexCount)
     {
         std::vector<uint32_t> newIndexBuffer;
         
         float distanceMul = 2.0f;
-        errorThreshold = currentSample.tError;
+        
         std::unordered_set<idx_t> meshletsSelected;
         
         for(const auto& meshlet : totalMeshlets) 
@@ -53,6 +54,7 @@ namespace Phoenix
                          
         } 
 
+        std::vector<MINERVA_VERTEX> tempVertBuffer;
         //CPU side 
         for(const auto& meshletID : meshletsSelected)
         {
@@ -61,12 +63,13 @@ namespace Phoenix
             newIndexBuffer.insert(newIndexBuffer.end(), currentPMeshlet->meshletIndexBuffer.begin(),
             currentPMeshlet->meshletIndexBuffer.end()); 
 
-            vertexBuffer.insert(vertexBuffer.end(), currentPMeshlet->meshletVertexBuffer.begin(),
+            tempVertBuffer.insert(tempVertBuffer.end(), currentPMeshlet->meshletVertexBuffer.begin(),
             currentPMeshlet->meshletVertexBuffer.end());
 
-            mesh.ColourGroups(*currentPMeshlet, globalVertBuffer);
+            mesh.ColourGroups(*currentPMeshlet, vertexBuffer);
             avgLOD += currentPMeshlet->lod;
         }
+        vertexCount = tempVertBuffer.size();
 
         avgLOD /= meshletsSelected.size();
         if(newIndexBuffer.size() <= 0)
