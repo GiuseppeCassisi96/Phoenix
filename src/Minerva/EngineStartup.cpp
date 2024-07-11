@@ -84,6 +84,7 @@ namespace Minerva
         samplesTest["3"].tError = 10.5f;
    
         std::string key;
+        std::string choose;
 
         std::cout << "Choose the model which you want rendered: \n"
         << "Insert '0' to render the submarine static model\n"
@@ -94,8 +95,20 @@ namespace Minerva
         assert(key == "1" || key == "0" || key == "2" || key == "3");
         std::cout << "Select the instance number: ";
         std::cin >> engineModLoader.instanceNumber;
+        std::cout << "Do you want use the algorithm (y/n): ";
+        std::cin >> choose;
+        assert(choose == "y" || choose == "n");
+        if(choose == "y")
+        {
+            engineRenderer.renderMode = Mode::Phoenix;
+        }
+        else if(choose == "n")
+        {
+            engineRenderer.renderMode = Mode::Normal;
+        }
 
         choosenSample = samplesTest[key];
+        dispatcher.errorThreshold = choosenSample.tError;
 
         windowInstance.EngineInitWindow(windowInstance.WIDTH, windowInstance.HEIGHT);
         engineInstance.CreateInstance();
@@ -109,6 +122,7 @@ namespace Minerva
         engineRenderer.CreateRenderPass();
         engineRenderer.CreateDescriptorSetLayout();
         enginePipeline.CreatePipeline("vert", "frag");
+        enginePipeline.CreateComputePipeline("comp");
         engineRenderer.CreateCommandPool();
         engineRenderer.CreateColorResources();
         engineRenderer.CreateDepthResources();
@@ -139,8 +153,8 @@ namespace Minerva
         std::chrono::duration<double> amount = endTime - startTime;
         std::cout << "S: " << amount << "\n";
 
-        dispatcher.PrepareComputeData(phoenixMesh.totalMeshlets, choosenSample);
         engineRenderer.PrepareIndirectData(engineModLoader.sceneMeshes[0].indices, engineModLoader.sceneMeshes[0].vertices);
+        dispatcher.PrepareComputeData(phoenixMesh.totalMeshlets, glm::radians(45.0f), windowInstance.WIDTH);
         engineModLoader.PrepareInstanceData(choosenSample);
         engineRenderer.CreateVertexBuffer();
         engineRenderer.CreateInstanceBuffer();
@@ -148,8 +162,9 @@ namespace Minerva
         CreateUniformBuffers<UniformBufferObject>(engineRenderer.transformationUBuffers);
         CreateUniformBuffers<BoneMatricesUniformType>(engineRenderer.animUBuffers);
         engineRenderer.CreateDescriptorPool();
-        engineRenderer.CreateDescriptorSets();
+        engineRenderer.CreateDescriptorSets(phoenixMesh.totalMeshlets.size());
         engineRenderer.CreateCommandBuffer();
+        engineRenderer.CreateComputeCommandBuffer();
         engineRenderer.CreateSyncObjects();
     
         
@@ -171,7 +186,8 @@ namespace Minerva
     {
         size_t indexMaxSize = engineModLoader.sceneMeshes[0].indices.size();
         std::vector<Mesh::Vertex> instanceVertexBuffer = engineModLoader.sceneMeshes[0].vertices;
-        
+        std::vector<uint32_t> constantIndexBuffer = engineModLoader.sceneMeshes[0].indices;
+        int frame = 0;
         while (!glfwWindowShouldClose(windowInstance.window)) 
         {
             engineModLoader.sceneMeshes[0].indices.clear();
@@ -180,32 +196,58 @@ namespace Minerva
             if(engineModLoader.sceneMeshes[0].typeOfMesh == Mesh::MeshType::Skeletal)
                 animator.UpdateAnimation(camera.deltaTime);
             camera.ProcessUserInput(windowInstance.window);
-            std::vector<size_t> multiOffset;
-            multiOffset.emplace_back(0);
             int indexOffset = 0;
             int vertexOffset = 0;
+            
             for(int i = 0; i < engineModLoader.instanceNumber; i++)
             {   
                 std::vector<uint32_t> instanceIndexBuffer;
+                std::vector<Phoenix::InputComputeData> selectedMeshlet;
+                selectedMeshlet.resize(phoenixMesh.totalMeshlets.size());
+                engineRenderer.UpdateUniformBuffer(frame, phoenixMesh.totalMeshlets.size(),
+                engineModLoader.instancesData[i].instancePos);
                 int numberOfVertex = 0;
-                //LOD selection LOD per meshlet 
-                instanceIndexBuffer = dispatcher.LodSelector(
-                phoenixMesh.totalMeshlets, windowInstance.WIDTH, glm::radians(45.0f),
-                engineModLoader.instancesData[i].instancePos,avgLOD, instanceVertexBuffer, 
-                engineTransform,phoenixMesh, numberOfVertex);
-                if(instanceIndexBuffer.size() > indexMaxSize)
-                    instanceIndexBuffer.resize(indexMaxSize);
+                //LOD selection LOD per meshlet
+                if(engineRenderer.renderMode == Mode::Phoenix)
+                {
+                    //LOD selection LOD per meshlet 
+                    engineRenderer.DispatchCompute(phoenixMesh.totalMeshlets.size(), 
+                    engineModLoader.instancesData[i].instancePos, selectedMeshlet.data());
+                    
+                    int count = 0;
+                    for(const auto& meshlet : selectedMeshlet)
+                    {
+                        if(!meshlet.isSelected)
+                            continue;
 
+                        Phoenix::PhoenixMeshlet currentPMeshlet = phoenixMesh.totalMeshlets[meshlet.meshletID];    
+                        
+                        instanceIndexBuffer.insert(instanceIndexBuffer.end(), currentPMeshlet.meshletIndexBuffer.begin(),
+                        currentPMeshlet.meshletIndexBuffer.end()); 
+
+                        count += currentPMeshlet.vertexCount;
+
+                        phoenixMesh.ColourGroups(currentPMeshlet, instanceVertexBuffer);
+                    }
+                    numberOfVertex = count;
+                    if(instanceIndexBuffer.size() > indexMaxSize)
+                        instanceIndexBuffer.resize(indexMaxSize);
+                }
+                else
+                {
+                    instanceIndexBuffer = std::move(constantIndexBuffer);
+                }
+                
                 //Indirect data update     
                 engineRenderer.indirectCommands[i].firstIndex = indexOffset;
                 engineRenderer.indirectCommands[i].vertexOffset = vertexOffset;
                 engineRenderer.indirectCommands[i].indexCount = static_cast<uint32_t>(instanceIndexBuffer.size());
                 indexOffset += static_cast<uint32_t>(instanceIndexBuffer.size());
                 vertexOffset += static_cast<uint32_t>(instanceVertexBuffer.size());
-
+                
                 //Global Index Buffer computation 
                 engineModLoader.sceneMeshes[0].indices.insert(engineModLoader.sceneMeshes[0].indices.end(), 
-                instanceIndexBuffer.begin(), instanceIndexBuffer.end());
+                instanceIndexBuffer.begin(), instanceIndexBuffer.end());           
 
                 //Global Vertex Buffer computation 
                 engineModLoader.sceneMeshes[0].vertices.insert(engineModLoader.sceneMeshes[0].vertices.end(), 
@@ -213,14 +255,17 @@ namespace Minerva
                 
                 //UI scene info update
                 engineModLoader.info.numberOfVertices += numberOfVertex;
-                engineModLoader.info.numberOfPolygons += instanceIndexBuffer.size() / static_cast<size_t>(3);
+                engineModLoader.info.numberOfPolygons += static_cast<int>(instanceIndexBuffer.size()) 
+                / static_cast<size_t>(3);
+                
+                constantIndexBuffer = std::move(instanceIndexBuffer);
+                
             }
             engineRenderer.DrawFrame();
             
             engineModLoader.info.numberOfVertices = 0;
             engineModLoader.info.numberOfPolygons = 0;
-            avgLOD = 0.0f;
-            
+            frame = (1 + frame) % engineRenderer.MAX_FRAMES_IN_FLIGHT;
         }
         vkDeviceWaitIdle(engineDevice.logicalDevice);
     }

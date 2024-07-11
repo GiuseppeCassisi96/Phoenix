@@ -11,10 +11,13 @@ namespace Minerva
     public:
         VkPipeline graphicsPipeline;
         VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+        VkPipeline computePipeline;
+        VkPipelineLayout computeLayout = VK_NULL_HANDLE;
         /// @brief Creates the graphics pipeline
         /// @param vertShaderName The name of vertex shader
         /// @param fragShaderName The name of fragment shader
         void CreatePipeline(const std::string& vertShaderName, const std::string& fragShaderName);
+        void CreateComputePipeline(const std::string& compShaderName);
         EnginePipeline() = default;
         ~EnginePipeline();
 

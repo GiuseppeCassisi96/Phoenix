@@ -8,39 +8,39 @@
 
 namespace Phoenix
 {
-    struct ComputeMeshletGroup
-    {
-        idx_t groupID;
-        std::vector<idx_t> parentsGroupID;  
-    };
-    struct ComputeLOD
-    {
-        std::vector<ComputeMeshletGroup> groupsData;
-    };
 
-    struct DataToCompute
+    struct InputComputeData
     {
-        std::vector<ComputeLOD> lodsToCompute;
+        alignas(16) glm::vec3 boundCenter{0.0f};
+        alignas(16) glm::vec3 parentBoundCenter{0.0f};
+        int meshletID = 0;
+        float error = 0.0f;
+        float parentError = 0.0f;
+        float errorThreshold = 0.0f;
+        int lod = 0;
+        int width = 0;
+        float hfov = 0.0f;
+        bool isSelected = false;
     };
-
 
     class LODSelectionDispatcher
     {
     public:
 
         int count = 0;
-        float currentAvgLOD = 0.0f;
-        DataToCompute computeData;
         float errorThreshold = 0.0f;
         float lastAvgLod = 0.0f;
-        void PrepareComputeData(std::vector<PhoenixMeshlet>& totalMeshlet, Minerva::SampleType currentSample);
+        std::vector<InputComputeData> inputData;
+        std::vector<PhoenixMeshlet> meshletForSelection;
+        
 
-        std::vector<uint32_t> LodSelector(std::vector<PhoenixMeshlet>&  totalMeshlets, int width, float hFov,
-        const glm::vec3& instancePos, float& avgLOD, std::vector<MINERVA_VERTEX>& vertexBuffer,
+        void PrepareComputeData(const std::vector<PhoenixMeshlet>&  totalMeshlets, float hFOV, int width);
+        std::vector<uint32_t> LodSelector(int width, float hFov,
+        const glm::vec3& instancePos, std::vector<MINERVA_VERTEX>& vertexBuffer,
         Minerva::Transformation& tr, PhoenixMesh& mesh, int& vertexCount);
 
         float ComputeScreenSpaceError(PhoenixBound bound,float groupError,int width, 
-        float hFov, const glm::vec3& instancePos, float distanceMul, const glm::mat4& modelView);
+        float hFov, const glm::vec3& instancePos, const glm::mat4& modelView);
 
         LODSelectionDispatcher() = default;
         ~LODSelectionDispatcher() = default;

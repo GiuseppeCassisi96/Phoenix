@@ -18,7 +18,6 @@ namespace Minerva
         std::vector<Animation> animations;
         Animator animator;
         SampleType choosenSample;
-        float avgLOD = 0.0f;
         void RunEngine();
     private:
         

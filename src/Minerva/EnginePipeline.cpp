@@ -13,12 +13,14 @@ namespace Minerva
     { 
         std::string totalVertPath = SHADERS_PATH + vertShaderName + FILE_TYPE;
         std::string totalFragPath = SHADERS_PATH + fragShaderName + FILE_TYPE;
+       
         auto vertShaderCode = ReadFile(totalVertPath);
         auto fragShaderCode = ReadFile(totalFragPath);
         VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode);
+        
 
-       VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
         vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
         vertShaderStageInfo.module = vertShaderModule;
@@ -29,6 +31,8 @@ namespace Minerva
         fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
         fragShaderStageInfo.module = fragShaderModule;
         fragShaderStageInfo.pName = "main";
+
+        
 
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
@@ -155,11 +159,48 @@ namespace Minerva
         vkDestroyShaderModule(engineDevice.logicalDevice, vertShaderModule, nullptr);
     }
 
+    void EnginePipeline::CreateComputePipeline(const std::string &compShaderName)
+    {
+        std::string totalVertPath = SHADERS_PATH + compShaderName + FILE_TYPE;
+        auto computeShaderCode = ReadFile(totalVertPath);
+
+        VkShaderModule computeShaderModule = CreateShaderModule(computeShaderCode);
+
+        VkPipelineShaderStageCreateInfo computeShaderStageInfo{};
+        computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+        computeShaderStageInfo.module = computeShaderModule;
+        computeShaderStageInfo.pName = "main";
+
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = 1;
+        pipelineLayoutInfo.pSetLayouts = &engineRenderer.descriptorSetLayout;
+
+        if (vkCreatePipelineLayout(engineDevice.logicalDevice, &pipelineLayoutInfo, nullptr, &computeLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create compute pipeline layout!");
+        }
+
+        VkComputePipelineCreateInfo pipelineInfo{};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        pipelineInfo.layout = computeLayout;
+        pipelineInfo.stage = computeShaderStageInfo;
+
+        if (vkCreateComputePipelines(engineDevice.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo,
+         nullptr, &computePipeline) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create compute pipeline!");
+        }
+
+        vkDestroyShaderModule(engineDevice.logicalDevice, computeShaderModule, nullptr);
+    }
+
     EnginePipeline::~EnginePipeline()
     {
         std::cout << "Destruction Pipeline... \n";
         vkDestroyPipeline(engineDevice.logicalDevice, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(engineDevice.logicalDevice, pipelineLayout, nullptr);
+        vkDestroyPipeline(engineDevice.logicalDevice, computePipeline, nullptr);
+        vkDestroyPipelineLayout(engineDevice.logicalDevice, computeLayout, nullptr);
     }
 
     EnginePipeline::EnginePipeline(EnginePipeline &&other) noexcept

@@ -3,6 +3,7 @@
 #include "vector"
 #include "Mesh.h"
 #include "Phoenix/PhoenixMesh.h"
+#include "Phoenix/LODSelectionDispatcher.h"
 
 
 namespace Minerva
@@ -12,6 +13,12 @@ namespace Minerva
         std::vector<VkBuffer> uniformBuffers;
         std::vector<VkDeviceMemory> uniformBuffersMemory;
         std::vector<void*> uniformBuffersMapped;
+    };
+
+    enum Mode
+    {
+        Phoenix = 0,
+        Normal = 1
     };
 
     struct BoneMatricesUniformType
@@ -27,17 +34,27 @@ namespace Minerva
             VkBuffer buffer{ VK_NULL_HANDLE };
             VkDeviceMemory memory{ VK_NULL_HANDLE };
         };
+        
+        Mode renderMode;
+        std::vector<VkBuffer> InputSSBO;
+        std::vector<VkDeviceMemory> InputMemorySSBO;
 
         IndirectCommandsBuffer indirectCommandsBuffer;
         std::vector<VkDrawIndexedIndirectCommand> indirectCommands;
         uint32_t currentFrame = 0;
+        uint32_t currentComputeFrame = 0;
         VkRenderPass renderPass;
         std::vector<VkFramebuffer> swapChainFramebuffers;
-        VkCommandPool commandPool;
+        VkCommandPool commandPool; 
         std::vector<VkCommandBuffer> commandBuffers;
+        std::vector<VkCommandBuffer> computeCommandBuffers;
         std::vector<VkSemaphore> imageAvailableSemaphores;
         std::vector<VkSemaphore> renderFinishedSemaphores;
         std::vector<VkFence> inFlightFences;
+
+        std::vector<VkFence> computeInFlightFences;
+        std::vector<VkSemaphore> computeFinishedSemaphores;
+
         VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
         bool framebufferResized = false;
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
@@ -54,6 +71,7 @@ namespace Minerva
         void CreateFramebuffers();
         void CreateCommandPool();
         void CreateCommandBuffer();
+        void CreateComputeCommandBuffer();
         void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
         void DrawFrame();
         void CreateSyncObjects();
@@ -65,8 +83,8 @@ namespace Minerva
         void CreateInstanceBuffer();
         void CreateDescriptorSetLayout();
         void CreateDescriptorPool();
-        void CreateDescriptorSets();
-        void UpdateUniformBuffer(uint32_t currentImage);
+        void CreateDescriptorSets(int numberOfMeshlets);
+        void UpdateUniformBuffer(uint32_t currentImage, int numberOfMeshlet = 0, glm::vec3 instancePos = glm::vec3{0.0f});
         VkCommandBuffer BeginSingleTimeCommands();
         void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
         void TransitionImageLayout(VkImage image, VkFormat format, 
@@ -84,6 +102,8 @@ namespace Minerva
         void UpdateIndexBuffer();
         void UpdateVertexBuffer();
         void CreateIndexBuffer();
+        void DispatchCompute(int numberOfMeshlets, glm::vec3 instancePos, void* data);
+        void RecordComputeBuffer(VkCommandBuffer commandBuffer, int numberOfMeshlets);
 
         Renderer() = default;
         ~Renderer();
@@ -95,14 +115,10 @@ namespace Minerva
         Renderer& operator=(Renderer&& other) noexcept;
 
     private:
-
-        
-          
         VkImage depthImage;
         VkDeviceMemory depthImageMemory;
         VkImageView depthImageView;
         std::vector<VkDescriptorSet> descriptorSets;
-        
         
     };
     

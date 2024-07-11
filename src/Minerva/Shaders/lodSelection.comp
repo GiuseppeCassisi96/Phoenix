@@ -1,0 +1,106 @@
+#version 450
+#extension GL_EXT_debug_printf : enable
+
+
+
+layout (binding = 0) uniform ParameterUBO {
+   mat4 model;
+   mat4 view;
+   mat4 proj;  
+   vec3 instancePos;
+} ubo;
+
+struct InputComputeData
+{
+   vec3 boundCenter;
+   vec3 parentBoundCenter;
+   int meshletID;
+   float error;
+   float parentError;
+   float errorThreshold;
+   int lod;
+   int width;
+   float hfov;
+   bool isSelected;
+};
+
+layout(std140, binding = 3) readonly buffer SSBOInputData 
+{
+   InputComputeData inputComputeData[ ];
+};
+
+layout(std140, binding = 4) buffer SSBOOutpuData 
+{
+   InputComputeData outputComputeData[ ];
+};
+
+
+
+
+const int MAX_LOD_NUMBER = 5;
+
+float ComputeScreenSpaceError(vec3 centerBound, float groupError, int width, 
+float hfov, vec3 instancePos, mat4 modelView)
+{
+   centerBound += instancePos;
+   vec4 viewCenter = vec4(centerBound, 1.0f);
+   //I transform the center in view-space
+   viewCenter = modelView * viewCenter;
+   centerBound.x = viewCenter.x;
+   centerBound.y = viewCenter.y;
+   centerBound.z = viewCenter.z;
+   float radius = length(vec3(modelView * vec4(groupError, 0, 0, 0 )));
+
+   //https://stackoverflow.com/questions/21648630/radius-of-projected-sphere-in-screen-space
+   const float cotHalfFov = 1.0f / tan(hfov / 2.0f);
+   const float d2 = dot(centerBound, centerBound);
+   const float r = radius;
+   const float div = sqrt(d2 - r*r);
+   float screenSpaceError = (width / 2.0f * cotHalfFov * r) / div;
+   return screenSpaceError;
+}
+
+
+layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+void main() 
+{
+   
+   uint index = gl_GlobalInvocationID.x;
+   if(index >= 325)
+      return;
+   
+   InputComputeData currentInputData = inputComputeData[index];
+   mat4 modelView = ubo.view * ubo.model;
+
+   debugPrintfEXT("MeshletID: %d",currentInputData.meshletID);
+
+   float currentError = ComputeScreenSpaceError(currentInputData.boundCenter, currentInputData.error, currentInputData.width,
+   currentInputData.hfov, ubo.instancePos, modelView);
+
+   if(currentInputData.lod >= MAX_LOD_NUMBER - 1)
+   {
+      if(currentError <= currentInputData.errorThreshold)
+      {
+         outputComputeData[index].isSelected = true;
+      }
+      else
+      {
+         outputComputeData[index].isSelected = false;
+      }
+   }
+   else
+   {
+      float parentError = ComputeScreenSpaceError(currentInputData.parentBoundCenter, currentInputData.parentError,
+      currentInputData.width, currentInputData.hfov, ubo.instancePos, modelView);
+      if(currentError <= currentInputData.errorThreshold && parentError > currentInputData.errorThreshold)
+      {
+         
+         outputComputeData[index].isSelected = true;
+      }
+      else
+      {
+         outputComputeData[index].isSelected = false;
+      }
+   }
+
+}

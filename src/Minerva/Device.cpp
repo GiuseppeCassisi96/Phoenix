@@ -162,9 +162,9 @@ namespace Minerva
             {
                 indices.presentFamily = index;
             }
-            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
             {
-                indices.graphicsFamily = index;
+                indices.phoenixFamily = index;
             }
             index++;
         }
@@ -172,9 +172,9 @@ namespace Minerva
     }
     void Device::CreateLogicalDevice(DebugManager& debugManager, const VkSurfaceKHR& windowSurface)
     {
-        QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, windowSurface);
+        deviceFamilies = FindQueueFamilies(physicalDevice, windowSurface);
         std::vector<VkDeviceQueueCreateInfo> queuesInfo {};
-        std::set<uint32_t> engineFamilies {indices.graphicsFamily.value(), indices.presentFamily.value()};
+        std::set<uint32_t> engineFamilies {deviceFamilies.phoenixFamily.value(), deviceFamilies.presentFamily.value()};
         float queuePriority = 1.0f;
         for(auto engineFamily : engineFamilies)
         {
@@ -211,8 +211,9 @@ namespace Minerva
         {
             throw std::runtime_error("failed to create logical device!");
         }
-        vkGetDeviceQueue(logicalDevice, indices.graphicsFamily.value(), 0, &graphicsQueue);
-        vkGetDeviceQueue(logicalDevice, indices.presentFamily.value(), 0, &presentationQueue);
+        vkGetDeviceQueue(logicalDevice, deviceFamilies.phoenixFamily.value(), 0, &graphicsQueue);
+        vkGetDeviceQueue(logicalDevice, deviceFamilies.phoenixFamily.value(), 0, &computeQueue);
+        vkGetDeviceQueue(logicalDevice, deviceFamilies.presentFamily.value(), 0, &presentationQueue);
     }
 
     void Device::PrintInfoDeviceSelected()
@@ -225,7 +226,11 @@ namespace Minerva
         std::cout << "|   Driver: " << deviceProperties.driverVersion << "                                    |\n";
         std::cout << "|   Vendor ID: " << deviceProperties.vendorID << "                                       |\n";
         if(deviceFeatures.multiDrawIndirect)
-        std::cout << "|   Multidraw Indirect: YES " << "                              |\n";   
+        {
+            std::cout << "|   Multidraw Indirect support: YES " << "                      |\n";
+            std::cout << "|   Max draw indirect count: " << deviceProperties.limits.maxDrawIndirectCount  <<"                   |\n";  
+        }
+         
         std::cout << "|_________________________________________________________|\n";
         std::cout << "\n\n";
     }
@@ -435,9 +440,9 @@ namespace Minerva
 
 
         QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, windowInstance.windowSurface);
-        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+        uint32_t queueFamilyIndices[] = {indices.phoenixFamily.value(), indices.presentFamily.value()};
 
-        if (indices.graphicsFamily != indices.presentFamily) 
+        if (indices.phoenixFamily != indices.presentFamily) 
         {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             createInfo.queueFamilyIndexCount = 2;

@@ -8,15 +8,15 @@ namespace Minerva
     /// @brief Is a struct which conteins indices of a queue family
     struct QueueFamilyIndices
     {
-        /*Is the graphics queue family used to submit rendering operations. I use std::optional 
+        /*Is the graphics and compute queue family used to submit rendering operations. I use std::optional 
         to check if the var has already been assigned*/
-        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> phoenixFamily;
         /*Is a presentation queue which presents images to the surface created in Window class*/
         std::optional<uint32_t> presentFamily;
 
         bool IsComplete() const
         {
-            return graphicsFamily.has_value() && presentFamily.has_value();
+            return phoenixFamily.has_value() && presentFamily.has_value();
         }
     };
 
@@ -36,11 +36,13 @@ namespace Minerva
         VkExtent2D swapChainExtent;
         VkFormat swapChainImageFormat;
         VkQueue graphicsQueue = VK_NULL_HANDLE;
+        VkQueue computeQueue = VK_NULL_HANDLE;
         VkQueue presentationQueue = VK_NULL_HANDLE;
         VkPresentModeKHR presentMode;
         VkSurfaceFormatKHR surfaceFormat;
         VkSampleCountFlagBits msaaSamples;
         VkPhysicalDeviceFeatures deviceFeatures;
+        QueueFamilyIndices deviceFamilies;
         //The handle of logical device
         VkDevice logicalDevice = VK_NULL_HANDLE;
         std::vector<VkImageView> swapChainImageViews;

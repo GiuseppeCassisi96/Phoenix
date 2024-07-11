@@ -246,7 +246,7 @@ namespace Phoenix
             glm::vec3 meshletCenter {0.0f};
             PhoenixMeshlet* meshlet = &prevLod.lodVerticesMeshlets[meshletIndex];
             SetColor(*meshlet);
-            
+            int vertexNum = 0;
             for(size_t j = 0; j < meshlet->meshletData.triangle_count * 3; ++j) 
             {
                 uint32_t index = prevLod.lodMeshletsClusterIndex[prevLod.lodMeshletsClusterTriangle
@@ -254,10 +254,13 @@ namespace Phoenix
                 if(uniqueIndex.insert(index).second)
                 {
                     meshlet->meshletVertexBuffer.emplace_back(prevLod.lodVertexBuffer[index]);
+                    meshlet->meshletVertexBuffer[vertexNum].color = meshlet->meshletColor;
+                    vertexNum++;
                 }
                 meshlet->meshletIndexBuffer.emplace_back(index);
                 groupIndexBuffer.emplace_back(index);    
-            }  
+            }
+            meshlet->vertexCount = vertexNum + 1;  
         }
           
     }
@@ -480,15 +483,12 @@ namespace Phoenix
         }
     }
 
-    void PhoenixMesh::ColourGroups(PhoenixMeshlet& meshlet, std::vector<MINERVA_VERTEX> &vertices)
+    void PhoenixMesh::ColourGroups(const PhoenixMeshlet& meshlet, std::vector<MINERVA_VERTEX> &vertices)
     {        
         for(int i = 0; i < meshlet.meshletIndexBuffer.size(); i++)
         {
             uint32_t index = meshlet.meshletIndexBuffer[i];
-            if(index >= vertices.size())
-                continue;
-            vertices[index].color = meshlet.meshletColor;
-            
+            vertices[index].color = meshlet.meshletColor;         
         }
     }
 

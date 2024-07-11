@@ -118,7 +118,7 @@ namespace Minerva
         VkCommandPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+        poolInfo.queueFamilyIndex = queueFamilyIndices.phoenixFamily.value();
         if (vkCreateCommandPool(engineDevice.logicalDevice, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create command pool!");
         }
@@ -133,6 +133,19 @@ namespace Minerva
         allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
 
         if (vkAllocateCommandBuffers(engineDevice.logicalDevice, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate command buffers!");
+        }
+    }
+    void Renderer::CreateComputeCommandBuffer()
+    {
+        computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.commandPool = commandPool;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandBufferCount = (uint32_t) computeCommandBuffers.size();
+
+        if (vkAllocateCommandBuffers(engineDevice.logicalDevice, &allocInfo, computeCommandBuffers.data()) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate command buffers!");
         }
     }
@@ -184,11 +197,10 @@ namespace Minerva
             vkCmdBindIndexBuffer(commandBuffer, mesh->meshBuffer.indexBuffer[currentFrame], 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
             enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            if(engineDevice.deviceFeatures.multiDrawIndirect)
+            for (auto j = 0; j < indirectCommands.size(); j++)
             {
-                vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, 0, 
-                static_cast<uint32_t>(indirectCommands.size()), 
-                sizeof(VkDrawIndexedIndirectCommand));
+                vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, 
+                j * sizeof(VkDrawIndexedIndirectCommand), 1, sizeof(VkDrawIndexedIndirectCommand));
             }
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
@@ -215,7 +227,6 @@ namespace Minerva
         UpdateIndexBuffer();
         UpdateVertexBuffer();
         UpdateIndirectData();
-        UpdateUniformBuffer(currentFrame);
         vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
         vkResetCommandBuffer(commandBuffers[currentFrame],  0);
         RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
@@ -267,6 +278,8 @@ namespace Minerva
         imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+        computeInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+        computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 
         VkSemaphoreCreateInfo semaphoreInfo{};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -280,7 +293,12 @@ namespace Minerva
             != VK_SUCCESS ||
                 vkCreateSemaphore(engineDevice.logicalDevice, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) 
                 != VK_SUCCESS ||
-                vkCreateFence(engineDevice.logicalDevice, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+                vkCreateFence(engineDevice.logicalDevice, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS
+                ||
+                vkCreateSemaphore(engineDevice.logicalDevice, &semaphoreInfo, nullptr, &computeFinishedSemaphores[i]) 
+                != VK_SUCCESS ||
+                vkCreateFence(engineDevice.logicalDevice, &fenceInfo, nullptr, &computeInFlightFences[i]) != VK_SUCCESS) 
+            {
 
                 throw std::runtime_error("failed to create synchronization objects for a frame!");
             }
@@ -343,7 +361,8 @@ namespace Minerva
         uboLayoutBinding.binding = 0;
         uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         uboLayoutBinding.descriptorCount = 1;
-        uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
+        uboLayoutBinding.pImmutableSamplers = nullptr;
 
         VkDescriptorSetLayoutBinding samplerLayoutBinding{};
         samplerLayoutBinding.binding = 1;
@@ -358,7 +377,29 @@ namespace Minerva
         animLayoutBinding.descriptorCount = 1;
         animLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-        std::array<VkDescriptorSetLayoutBinding, 3> bindings = {uboLayoutBinding, samplerLayoutBinding, animLayoutBinding};
+        VkDescriptorSetLayoutBinding SSBOLastFrameBinding{};
+        SSBOLastFrameBinding.binding = 3;
+        SSBOLastFrameBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        SSBOLastFrameBinding.descriptorCount = 1;
+        SSBOLastFrameBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+        SSBOLastFrameBinding.pImmutableSamplers = nullptr;
+
+        VkDescriptorSetLayoutBinding SSBOCurrentFrameBinding{};
+        SSBOCurrentFrameBinding.binding = 4;
+        SSBOCurrentFrameBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        SSBOCurrentFrameBinding.descriptorCount = 1;
+        SSBOCurrentFrameBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+        SSBOCurrentFrameBinding.pImmutableSamplers = nullptr;
+
+
+        std::array<VkDescriptorSetLayoutBinding, 5> bindings = 
+        {
+            uboLayoutBinding, 
+            samplerLayoutBinding, 
+            animLayoutBinding,
+            SSBOLastFrameBinding,
+            SSBOCurrentFrameBinding
+        };
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -371,11 +412,13 @@ namespace Minerva
 
     void Renderer::CreateDescriptorPool()
     {
-        std::array<VkDescriptorPoolSize, 2> poolSizes{};
+        std::array<VkDescriptorPoolSize, 3> poolSizes{};
         poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
         poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * 2;
+        poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * 2;
 
         VkDescriptorPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -389,7 +432,7 @@ namespace Minerva
         }
     }
 
-    void Renderer::CreateDescriptorSets()
+    void Renderer::CreateDescriptorSets(int numberOfMeshlets)
     {
         std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
         VkDescriptorSetAllocateInfo allocInfo{};
@@ -403,7 +446,8 @@ namespace Minerva
             throw std::runtime_error("failed to allocate descriptor sets!");
         }
 
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
+        {
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.buffer = transformationUBuffers.uniformBuffers[i];
             bufferInfo.offset = 0;
@@ -419,7 +463,17 @@ namespace Minerva
             imageInfo.imageView = texture.textureImageView;
             imageInfo.sampler = texture.textureSampler;
 
-            std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
+            VkDescriptorBufferInfo SSBOLastFrameInfo{};
+            SSBOLastFrameInfo.buffer = InputSSBO[(i - 1) % MAX_FRAMES_IN_FLIGHT];
+            SSBOLastFrameInfo.offset = 0;
+            SSBOLastFrameInfo.range = sizeof(Phoenix::InputComputeData) * numberOfMeshlets;
+
+            VkDescriptorBufferInfo SSBOCurrentFrameInfo{};
+            SSBOCurrentFrameInfo.buffer = InputSSBO[i];
+            SSBOCurrentFrameInfo.offset = 0;
+            SSBOCurrentFrameInfo.range = sizeof(Phoenix::InputComputeData) * numberOfMeshlets;
+
+            std::array<VkWriteDescriptorSet, 5> descriptorWrites{};
 
             descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[0].dstSet = descriptorSets[i];
@@ -437,7 +491,6 @@ namespace Minerva
             descriptorWrites[1].descriptorCount = 1;
             descriptorWrites[1].pImageInfo = &imageInfo;
 
-
             descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[2].dstSet = descriptorSets[i];
             descriptorWrites[2].dstBinding = 2;
@@ -446,16 +499,37 @@ namespace Minerva
             descriptorWrites[2].descriptorCount = 1;
             descriptorWrites[2].pBufferInfo = &animBufferInfo;
 
+            descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[3].dstSet = descriptorSets[i];
+            descriptorWrites[3].dstBinding = 3;
+            descriptorWrites[3].dstArrayElement = 0;
+            descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            descriptorWrites[3].descriptorCount = 1;
+            descriptorWrites[3].pBufferInfo = &SSBOLastFrameInfo;
+
+            descriptorWrites[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[4].dstSet = descriptorSets[i];
+            descriptorWrites[4].dstBinding = 4;
+            descriptorWrites[4].dstArrayElement = 0;
+            descriptorWrites[4].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            descriptorWrites[4].descriptorCount = 1;
+            descriptorWrites[4].pBufferInfo = &SSBOCurrentFrameInfo;
+        
+
             vkUpdateDescriptorSets(engineDevice.logicalDevice, 
             static_cast<uint32_t>(descriptorWrites.size()),
             descriptorWrites.data(), 0, nullptr);
         }
     }
 
-    void Renderer::UpdateUniformBuffer(uint32_t currentImage)
+    void Renderer::UpdateUniformBuffer(uint32_t currentImage, int numberOfMeshlet, 
+    glm::vec3 instancePos)
     {
         engineTransform.Move(glm::vec3(-4.0f, 0.0f, -0.8f));
         engineTransform.Scale(glm::vec3(0.03f), engineTransform.ubo.model);
+
+        //engineTransform.ubo.numberOfMeshlet = numberOfMeshlet;
+        engineTransform.ubo.instancePos = instancePos;
         
         camera.UpdateViewMatrix(engineTransform.ubo.view);
 
@@ -633,6 +707,7 @@ namespace Minerva
             indirectCmd.vertexOffset = i * vertexBuffer.size();
             indirectCmd.indexCount = indexBuffer.size();
             indirectCmd.firstInstance = i; //Costant
+            //Is 1 because I consider each "instace model" as a different model
             indirectCmd.instanceCount = 1; //Costant
             indirectCommands.emplace_back(indirectCmd);
         }
@@ -748,8 +823,63 @@ namespace Minerva
             bufferSize, 0, &mesh->meshBuffer.indexBufferMapped[i]);
         }
     }
-    void Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, 
-    VkBuffer &buffer, VkDeviceMemory &bufferMemory)
+    void Renderer::DispatchCompute(int numberOfMeshlets, glm::vec3 instancePos, void* data)
+    {
+        UpdateUniformBuffer(currentComputeFrame, numberOfMeshlets,instancePos);
+        vkResetFences(engineDevice.logicalDevice, 1, &computeInFlightFences[currentComputeFrame]);
+        vkResetCommandBuffer(computeCommandBuffers[currentComputeFrame], 0);
+        RecordComputeBuffer(computeCommandBuffers[currentComputeFrame], numberOfMeshlets);
+
+        VkSubmitInfo computeSubmitInfo{};
+        computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        computeSubmitInfo.commandBufferCount = 1;
+        computeSubmitInfo.pCommandBuffers = &computeCommandBuffers[currentComputeFrame];
+
+        if (vkQueueSubmit(engineDevice.computeQueue, 1, &computeSubmitInfo, computeInFlightFences[currentComputeFrame]) 
+        != VK_SUCCESS) 
+        {
+            throw std::runtime_error("failed to submit compute command buffer!");
+        };
+        vkWaitForFences(engineDevice.logicalDevice, 1, &computeInFlightFences[currentComputeFrame], VK_TRUE, UINT64_MAX);
+        
+        VkDeviceSize bufferSize = sizeof(Phoenix::InputComputeData) * numberOfMeshlets;
+
+        void* bufferData = nullptr;
+        vkMapMemory(engineDevice.logicalDevice, InputMemorySSBO[currentComputeFrame], 0, bufferSize, 0, &bufferData);
+        memcpy(data, bufferData, bufferSize);
+        vkUnmapMemory(engineDevice.logicalDevice, InputMemorySSBO[currentComputeFrame]);
+
+        currentComputeFrame = (currentComputeFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    }
+    void Renderer::RecordComputeBuffer(VkCommandBuffer commandBuffer, int numberOfMeshlets)
+    {
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+            throw std::runtime_error("failed to begin recording compute command buffer!");
+        }
+
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, enginePipeline.computePipeline);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, enginePipeline.computeLayout, 0, 1,
+        &descriptorSets[currentComputeFrame], 0, nullptr);
+        vkCmdDispatch(commandBuffer, (numberOfMeshlets / 32) + 1, 1, 1);
+
+        VkMemoryBarrier computeBarrier;
+        computeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+        computeBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        computeBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+        computeBarrier.pNext = nullptr;
+
+        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT,
+        0, 1, &computeBarrier, 0, nullptr,0, nullptr);
+
+        if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+            throw std::runtime_error("failed to record compute command buffer!");
+        }
+    }
+    void Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+                                VkBuffer &buffer, VkDeviceMemory &bufferMemory)
     {
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -830,7 +960,9 @@ namespace Minerva
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroySemaphore(engineDevice.logicalDevice, renderFinishedSemaphores[i], nullptr);
             vkDestroySemaphore(engineDevice.logicalDevice, imageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(engineDevice.logicalDevice, inFlightFences[i], nullptr);
+            vkDestroySemaphore(engineDevice.logicalDevice, computeFinishedSemaphores[i], nullptr);
+            vkDestroyFence(engineDevice.logicalDevice, inFlightFences[i], nullptr);     
+            vkDestroyFence(engineDevice.logicalDevice, computeInFlightFences[i], nullptr);
         }
         for (auto framebuffer : swapChainFramebuffers) {
             vkDestroyFramebuffer(engineDevice.logicalDevice, framebuffer, nullptr);
@@ -843,6 +975,8 @@ namespace Minerva
             vkFreeMemory(engineDevice.logicalDevice, transformationUBuffers.uniformBuffersMemory[i], nullptr);
             vkDestroyBuffer(engineDevice.logicalDevice, animUBuffers.uniformBuffers[i], nullptr);
             vkFreeMemory(engineDevice.logicalDevice, animUBuffers.uniformBuffersMemory[i], nullptr);
+            vkDestroyBuffer(engineDevice.logicalDevice, InputSSBO[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, InputMemorySSBO[i], nullptr);
         }
         vkDestroyDescriptorPool(engineDevice.logicalDevice, descriptorPool, nullptr);
         vkDestroyDescriptorSetLayout(engineDevice.logicalDevice, descriptorSetLayout, nullptr);

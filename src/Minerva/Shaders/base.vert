@@ -15,6 +15,7 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 model;
     mat4 view;
     mat4 proj;
+    vec3 instancePos;
 } ubo;
 
 const int MAX_BONES = 100;
@@ -27,7 +28,6 @@ layout(binding = 2) uniform animBufferObk
 } anim;
 
 void main() {
-
     vec4 totalPosition = vec4(0.0);
     for(int i = 0 ; i < MAX_BONE_PER_VERTEX ; i++)
     {

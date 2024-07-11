@@ -9,7 +9,8 @@ file(GLOB_RECURSE PHOENIX_SRC ${PROJECT_SOURCE_DIR}/src/Minerva/Phoenix/{*.cpp, 
 
 
 
-add_executable(${PROJECT_NAME} ${SOURCES} ${MINERVA_SRC} ${PHOENIX_SRC} 
+
+add_executable(${PROJECT_NAME} ${SOURCES} ${MINERVA_SRC} ${PHOENIX_SRC}  
 ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp ${IMGUI_PATH}/backends/imgui_impl_vulkan.cpp
  ${IMGUI_PATH}/imgui.cpp ${IMGUI_PATH}/imgui_draw.cpp ${IMGUI_PATH}/imgui_demo.cpp 
  ${IMGUI_PATH}/imgui_tables.cpp
