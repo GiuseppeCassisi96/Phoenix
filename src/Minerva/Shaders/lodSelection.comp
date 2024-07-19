@@ -7,7 +7,6 @@ layout (binding = 0) uniform ParameterUBO {
    mat4 model;
    mat4 view;
    mat4 proj;  
-   vec3 instancePos;
 } ubo;
 
 struct InputComputeData
@@ -17,11 +16,25 @@ struct InputComputeData
    int meshletID;
    float error;
    float parentError;
-   float errorThreshold;
    int lod;
+   int numberOfInstance;
+};
+
+struct ConstantData
+{
+   vec3 instancesPos;
+   int numberOfMeshlet;
+   int numberOfInstances;
    int width;
    float hfov;
-   bool isSelected;
+   float errorThreshold;
+};
+
+struct OutputData
+{
+   int index;
+   int ID;
+   int instanceNumber;
 };
 
 layout(std140, binding = 3) readonly buffer SSBOInputData 
@@ -29,9 +42,14 @@ layout(std140, binding = 3) readonly buffer SSBOInputData
    InputComputeData inputComputeData[ ];
 };
 
-layout(std140, binding = 4) buffer SSBOOutpuData 
+layout(std140, binding = 4) readonly buffer SSBOConstantData 
 {
-   InputComputeData outputComputeData[ ];
+   ConstantData constantData[ ];
+};
+
+layout(std140, binding = 5) buffer SSBOSelectedData 
+{
+   OutputData selected[ ];
 };
 
 
@@ -60,47 +78,39 @@ float hfov, vec3 instancePos, mat4 modelView)
    return screenSpaceError;
 }
 
-
-layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 32) in;
 void main() 
 {
-   
+   debugPrintfEXT("TT");
    uint index = gl_GlobalInvocationID.x;
-   if(index >= 325)
+   if(index >= constantData[0].numberOfMeshlet * constantData[0].numberOfInstances)
       return;
+
+   int modIndex = int(floor(index / (constantData[0].numberOfMeshlet)));
+   vec3 currentInstancePos = constantData[modIndex].instancesPos;
    
    InputComputeData currentInputData = inputComputeData[index];
    mat4 modelView = ubo.view * ubo.model;
 
-   debugPrintfEXT("MeshletID: %d",currentInputData.meshletID);
-
-   float currentError = ComputeScreenSpaceError(currentInputData.boundCenter, currentInputData.error, currentInputData.width,
-   currentInputData.hfov, ubo.instancePos, modelView);
+   float currentError = ComputeScreenSpaceError(currentInputData.boundCenter, currentInputData.error, constantData[0].width,
+   constantData[0].hfov, currentInstancePos, modelView);
+   float parentError;
 
    if(currentInputData.lod >= MAX_LOD_NUMBER - 1)
    {
-      if(currentError <= currentInputData.errorThreshold)
-      {
-         outputComputeData[index].isSelected = true;
-      }
-      else
-      {
-         outputComputeData[index].isSelected = false;
-      }
+      parentError = constantData[0].errorThreshold + 0.1f;
    }
    else
    {
-      float parentError = ComputeScreenSpaceError(currentInputData.parentBoundCenter, currentInputData.parentError,
-      currentInputData.width, currentInputData.hfov, ubo.instancePos, modelView);
-      if(currentError <= currentInputData.errorThreshold && parentError > currentInputData.errorThreshold)
-      {
-         
-         outputComputeData[index].isSelected = true;
-      }
-      else
-      {
-         outputComputeData[index].isSelected = false;
-      }
+      parentError = ComputeScreenSpaceError(currentInputData.parentBoundCenter, currentInputData.parentError,
+      constantData[0].width, constantData[0].hfov, currentInstancePos, modelView);
    }
+   
 
+   if(currentError <= constantData[0].errorThreshold && parentError > constantData[0].errorThreshold)
+   {
+      int i = atomicAdd(selected[0].index, 1);
+      selected[i].ID = currentInputData.meshletID;
+      selected[i].instanceNumber = currentInputData.numberOfInstance;
+   }
 }

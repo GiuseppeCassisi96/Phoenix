@@ -58,8 +58,6 @@ namespace Phoenix
         float error = 0.0f;
         float parentError = 0.0f;
         int lod = 0;
-        glm::vec3 meshletColor;
-        int vertexCount;
     };
 
     struct MeshletGroup
@@ -87,8 +85,6 @@ namespace Phoenix
         std::vector<PhoenixMeshlet> totalMeshlets;
         std::unordered_set<uint32_t> uniqueIndex;
         
-        void ColourGroups(const PhoenixMeshlet& meshlet, std::vector<MINERVA_VERTEX>& vertices);
-        void SetColor(PhoenixMeshlet& meshlet);
         void BuildLodsHierarchy(std::vector<MINERVA_VERTEX>& vertices, std::vector<uint32_t> &indices);
         std::vector<MeshletGroup> Group(LOD& currentLod, LOD* prevLod = nullptr);
         void Merge(const MeshletGroup& group, LOD& prevLod, std::vector<uint32_t>& groupIndexBuffer, 

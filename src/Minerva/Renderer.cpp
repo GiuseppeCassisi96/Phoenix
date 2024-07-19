@@ -123,6 +123,19 @@ namespace Minerva
             throw std::runtime_error("failed to create command pool!");
         }
     }
+
+    void Renderer::CreateComputeCommandPool()
+    {
+        QueueFamilyIndices queueFamilyIndices = engineDevice.FindQueueFamilies(engineDevice.physicalDevice, 
+        windowInstance.windowSurface);
+        VkCommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        poolInfo.queueFamilyIndex = queueFamilyIndices.computeFamily.value();
+        if (vkCreateCommandPool(engineDevice.logicalDevice, &poolInfo, nullptr, &computeCommandPool) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create command pool!");
+        }
+    }
     void Renderer::CreateCommandBuffer()
     {
         commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -141,7 +154,7 @@ namespace Minerva
         computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = commandPool;
+        allocInfo.commandPool = computeCommandPool;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount = (uint32_t) computeCommandBuffers.size();
 
@@ -197,11 +210,23 @@ namespace Minerva
             vkCmdBindIndexBuffer(commandBuffer, mesh->meshBuffer.indexBuffer[currentFrame], 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
             enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            for (auto j = 0; j < indirectCommands.size(); j++)
+            if(renderMode == Mode::Phoenix)
             {
-                vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, 
-                j * sizeof(VkDrawIndexedIndirectCommand), 1, sizeof(VkDrawIndexedIndirectCommand));
+               vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, 0, 
+               indirectCommands.size(), sizeof(VkDrawIndexedIndirectCommand));
             }
+            else
+            {
+                for (auto indirectCmd : indirectCommands)
+                {
+                    for (uint32_t j = 0; j < indirectCmd.instanceCount; j++)
+                    {
+                        vkCmdDrawIndexed(commandBuffer, indirectCmd.indexCount, 1, 
+                        indirectCmd.firstIndex, 0, indirectCmd.firstInstance + j);
+                    }
+                }
+            }
+    
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
         vkCmdEndRenderPass(commandBuffer);
@@ -384,21 +409,29 @@ namespace Minerva
         SSBOLastFrameBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
         SSBOLastFrameBinding.pImmutableSamplers = nullptr;
 
-        VkDescriptorSetLayoutBinding SSBOCurrentFrameBinding{};
-        SSBOCurrentFrameBinding.binding = 4;
-        SSBOCurrentFrameBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        SSBOCurrentFrameBinding.descriptorCount = 1;
-        SSBOCurrentFrameBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-        SSBOCurrentFrameBinding.pImmutableSamplers = nullptr;
+        VkDescriptorSetLayoutBinding SSBOConstantBinding{};
+        SSBOConstantBinding.binding = 4;
+        SSBOConstantBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        SSBOConstantBinding.descriptorCount = 1;
+        SSBOConstantBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+        SSBOConstantBinding.pImmutableSamplers = nullptr;
+
+        VkDescriptorSetLayoutBinding SSBOOutputBinding{};
+        SSBOOutputBinding.binding = 5;
+        SSBOOutputBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        SSBOOutputBinding.descriptorCount = 1;
+        SSBOOutputBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+        SSBOOutputBinding.pImmutableSamplers = nullptr;
 
 
-        std::array<VkDescriptorSetLayoutBinding, 5> bindings = 
+        std::array<VkDescriptorSetLayoutBinding, 6> bindings = 
         {
             uboLayoutBinding, 
             samplerLayoutBinding, 
             animLayoutBinding,
             SSBOLastFrameBinding,
-            SSBOCurrentFrameBinding
+            SSBOConstantBinding,
+            SSBOOutputBinding,
         };
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -464,16 +497,21 @@ namespace Minerva
             imageInfo.sampler = texture.textureSampler;
 
             VkDescriptorBufferInfo SSBOLastFrameInfo{};
-            SSBOLastFrameInfo.buffer = InputSSBO[(i - 1) % MAX_FRAMES_IN_FLIGHT];
+            SSBOLastFrameInfo.buffer = InputSSBO[i];
             SSBOLastFrameInfo.offset = 0;
-            SSBOLastFrameInfo.range = sizeof(Phoenix::InputComputeData) * numberOfMeshlets;
+            SSBOLastFrameInfo.range = (sizeof(Phoenix::InputComputeData) * numberOfMeshlets) * engineModLoader.instanceNumber;
 
-            VkDescriptorBufferInfo SSBOCurrentFrameInfo{};
-            SSBOCurrentFrameInfo.buffer = InputSSBO[i];
-            SSBOCurrentFrameInfo.offset = 0;
-            SSBOCurrentFrameInfo.range = sizeof(Phoenix::InputComputeData) * numberOfMeshlets;
+            VkDescriptorBufferInfo SSBOConstantInfo{};
+            SSBOConstantInfo.buffer = ConstantSSBO[i];
+            SSBOConstantInfo.offset = 0;
+            SSBOConstantInfo.range = sizeof(Phoenix::ConstantData) * engineModLoader.instanceNumber;
 
-            std::array<VkWriteDescriptorSet, 5> descriptorWrites{};
+            VkDescriptorBufferInfo SSBOOutputInfo{};
+            SSBOOutputInfo.buffer = OutputSSBO[i];
+            SSBOOutputInfo.offset = 0;
+            SSBOOutputInfo.range = (sizeof(Phoenix::OutputData) * numberOfMeshlets) * engineModLoader.instanceNumber;
+
+            std::array<VkWriteDescriptorSet, 6> descriptorWrites{};
 
             descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[0].dstSet = descriptorSets[i];
@@ -513,7 +551,15 @@ namespace Minerva
             descriptorWrites[4].dstArrayElement = 0;
             descriptorWrites[4].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
             descriptorWrites[4].descriptorCount = 1;
-            descriptorWrites[4].pBufferInfo = &SSBOCurrentFrameInfo;
+            descriptorWrites[4].pBufferInfo = &SSBOConstantInfo;
+
+            descriptorWrites[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[5].dstSet = descriptorSets[i];
+            descriptorWrites[5].dstBinding = 5;
+            descriptorWrites[5].dstArrayElement = 0;
+            descriptorWrites[5].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            descriptorWrites[5].descriptorCount = 1;
+            descriptorWrites[5].pBufferInfo = &SSBOOutputInfo;
         
 
             vkUpdateDescriptorSets(engineDevice.logicalDevice, 
@@ -522,14 +568,10 @@ namespace Minerva
         }
     }
 
-    void Renderer::UpdateUniformBuffer(uint32_t currentImage, int numberOfMeshlet, 
-    glm::vec3 instancePos)
+    void Renderer::UpdateUniformBuffer(uint32_t currentImage)
     {
         engineTransform.Move(glm::vec3(-4.0f, 0.0f, -0.8f));
         engineTransform.Scale(glm::vec3(0.03f), engineTransform.ubo.model);
-
-        //engineTransform.ubo.numberOfMeshlet = numberOfMeshlet;
-        engineTransform.ubo.instancePos = instancePos;
         
         camera.UpdateViewMatrix(engineTransform.ubo.view);
 
@@ -823,12 +865,34 @@ namespace Minerva
             bufferSize, 0, &mesh->meshBuffer.indexBufferMapped[i]);
         }
     }
-    void Renderer::DispatchCompute(int numberOfMeshlets, glm::vec3 instancePos, void* data)
+
+
+    void Renderer::DispatchCompute(int numberOfMeshlets)
     {
-        UpdateUniformBuffer(currentComputeFrame, numberOfMeshlets,instancePos);
+        vkResetFences(engineDevice.logicalDevice, 1, &computeInFlightFences[(currentComputeFrame + 1) % MAX_FRAMES_IN_FLIGHT]);
+        vkResetCommandBuffer(computeCommandBuffers[(currentComputeFrame + 1) % MAX_FRAMES_IN_FLIGHT], 0);
+        RecordComputeBuffer(computeCommandBuffers[(currentComputeFrame + 1) % MAX_FRAMES_IN_FLIGHT], numberOfMeshlets,
+        (currentComputeFrame + 1) % MAX_FRAMES_IN_FLIGHT);
+
+        VkSubmitInfo computeSubmitInfo{};
+        computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        computeSubmitInfo.commandBufferCount = 1;
+        computeSubmitInfo.pCommandBuffers = &computeCommandBuffers[(currentComputeFrame + 1) % MAX_FRAMES_IN_FLIGHT];
+
+        if (vkQueueSubmit(engineDevice.computeQueue, 1, &computeSubmitInfo, computeInFlightFences
+        [(currentComputeFrame + 1) % MAX_FRAMES_IN_FLIGHT]) 
+        != VK_SUCCESS) 
+        {
+            throw std::runtime_error("failed to submit compute command buffer!");
+        };
+
+    }
+
+    void Renderer::InitialDispatchCompute(int numberOfMeshlets, void *outData)
+    {
         vkResetFences(engineDevice.logicalDevice, 1, &computeInFlightFences[currentComputeFrame]);
         vkResetCommandBuffer(computeCommandBuffers[currentComputeFrame], 0);
-        RecordComputeBuffer(computeCommandBuffers[currentComputeFrame], numberOfMeshlets);
+        RecordComputeBuffer(computeCommandBuffers[currentComputeFrame], numberOfMeshlets, currentComputeFrame);
 
         VkSubmitInfo computeSubmitInfo{};
         computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -840,18 +904,17 @@ namespace Minerva
         {
             throw std::runtime_error("failed to submit compute command buffer!");
         };
-        vkWaitForFences(engineDevice.logicalDevice, 1, &computeInFlightFences[currentComputeFrame], VK_TRUE, UINT64_MAX);
+
+        vkWaitForFences(engineDevice.logicalDevice, 1, &computeInFlightFences[currentComputeFrame], VK_TRUE, UINT64_MAX);   
+        VkDeviceSize outBufferSize = (sizeof(Phoenix::OutputData) * numberOfMeshlets) 
+        * engineModLoader.instanceNumber;
+
+        memcpy(outData, OutputMappedSSBO[currentComputeFrame], outBufferSize);
+
         
-        VkDeviceSize bufferSize = sizeof(Phoenix::InputComputeData) * numberOfMeshlets;
-
-        void* bufferData = nullptr;
-        vkMapMemory(engineDevice.logicalDevice, InputMemorySSBO[currentComputeFrame], 0, bufferSize, 0, &bufferData);
-        memcpy(data, bufferData, bufferSize);
-        vkUnmapMemory(engineDevice.logicalDevice, InputMemorySSBO[currentComputeFrame]);
-
-        currentComputeFrame = (currentComputeFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
-    void Renderer::RecordComputeBuffer(VkCommandBuffer commandBuffer, int numberOfMeshlets)
+
+    void Renderer::RecordComputeBuffer(VkCommandBuffer commandBuffer, int numberOfMeshlets, int computeFrame)
     {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -862,17 +925,8 @@ namespace Minerva
 
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, enginePipeline.computePipeline);
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, enginePipeline.computeLayout, 0, 1,
-        &descriptorSets[currentComputeFrame], 0, nullptr);
-        vkCmdDispatch(commandBuffer, (numberOfMeshlets / 32) + 1, 1, 1);
-
-        VkMemoryBarrier computeBarrier;
-        computeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-        computeBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-        computeBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-        computeBarrier.pNext = nullptr;
-
-        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT,
-        0, 1, &computeBarrier, 0, nullptr,0, nullptr);
+        &descriptorSets[computeFrame], 0, nullptr);
+        vkCmdDispatch(commandBuffer,computeWorkgroup , 1, 1);
 
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to record compute command buffer!");
@@ -968,6 +1022,7 @@ namespace Minerva
             vkDestroyFramebuffer(engineDevice.logicalDevice, framebuffer, nullptr);
         }
         vkDestroyCommandPool(engineDevice.logicalDevice, commandPool, nullptr);
+        vkDestroyCommandPool(engineDevice.logicalDevice, computeCommandPool, nullptr);
         vkDestroyRenderPass(engineDevice.logicalDevice, renderPass, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -977,6 +1032,10 @@ namespace Minerva
             vkFreeMemory(engineDevice.logicalDevice, animUBuffers.uniformBuffersMemory[i], nullptr);
             vkDestroyBuffer(engineDevice.logicalDevice, InputSSBO[i], nullptr);
             vkFreeMemory(engineDevice.logicalDevice, InputMemorySSBO[i], nullptr);
+            vkDestroyBuffer(engineDevice.logicalDevice, ConstantSSBO[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, ConstantMemorySSBO[i], nullptr);
+            vkDestroyBuffer(engineDevice.logicalDevice, OutputSSBO[i], nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, OutputMemorySSBO[i], nullptr);
         }
         vkDestroyDescriptorPool(engineDevice.logicalDevice, descriptorPool, nullptr);
         vkDestroyDescriptorSetLayout(engineDevice.logicalDevice, descriptorSetLayout, nullptr);

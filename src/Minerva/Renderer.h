@@ -36,8 +36,17 @@ namespace Minerva
         };
         
         Mode renderMode;
+        //Read only buffers
         std::vector<VkBuffer> InputSSBO;
         std::vector<VkDeviceMemory> InputMemorySSBO;
+        std::vector<VkBuffer> ConstantSSBO;
+        std::vector<VkDeviceMemory> ConstantMemorySSBO;
+
+        std::vector<VkBuffer> OutputSSBO;
+        std::vector<VkDeviceMemory> OutputMemorySSBO;
+        std::vector<void*> OutputMappedSSBO;
+
+        int computeWorkgroup = 0;
 
         IndirectCommandsBuffer indirectCommandsBuffer;
         std::vector<VkDrawIndexedIndirectCommand> indirectCommands;
@@ -46,6 +55,7 @@ namespace Minerva
         VkRenderPass renderPass;
         std::vector<VkFramebuffer> swapChainFramebuffers;
         VkCommandPool commandPool; 
+        VkCommandPool computeCommandPool; 
         std::vector<VkCommandBuffer> commandBuffers;
         std::vector<VkCommandBuffer> computeCommandBuffers;
         std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -70,6 +80,7 @@ namespace Minerva
         void CreateRenderPass();
         void CreateFramebuffers();
         void CreateCommandPool();
+        void CreateComputeCommandPool();
         void CreateCommandBuffer();
         void CreateComputeCommandBuffer();
         void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
@@ -84,7 +95,7 @@ namespace Minerva
         void CreateDescriptorSetLayout();
         void CreateDescriptorPool();
         void CreateDescriptorSets(int numberOfMeshlets);
-        void UpdateUniformBuffer(uint32_t currentImage, int numberOfMeshlet = 0, glm::vec3 instancePos = glm::vec3{0.0f});
+        void UpdateUniformBuffer(uint32_t currentImage);
         VkCommandBuffer BeginSingleTimeCommands();
         void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
         void TransitionImageLayout(VkImage image, VkFormat format, 
@@ -102,8 +113,9 @@ namespace Minerva
         void UpdateIndexBuffer();
         void UpdateVertexBuffer();
         void CreateIndexBuffer();
-        void DispatchCompute(int numberOfMeshlets, glm::vec3 instancePos, void* data);
-        void RecordComputeBuffer(VkCommandBuffer commandBuffer, int numberOfMeshlets);
+        void DispatchCompute(int numberOfMeshlets);
+        void InitialDispatchCompute(int numberOfMeshlets, void* outData);
+        void RecordComputeBuffer(VkCommandBuffer commandBuffer, int numberOfMeshlets, int computeFrame);
 
         Renderer() = default;
         ~Renderer();

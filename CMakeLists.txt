@@ -17,7 +17,11 @@ ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp ${IMGUI_PATH}/backends/imgui_impl_vul
  ${IMGUI_PATH}/imgui_widgets.cpp
  ${MESHOPTIMIZER_PATH}/simplifier.cpp
  ${MESHOPTIMIZER_PATH}/meshoptimizer.h
- ${MESHOPTIMIZER_PATH}/clusterizer.cpp ) 
+ ${MESHOPTIMIZER_PATH}/clusterizer.cpp
+ ${MESHOPTIMIZER_PATH}/indexgenerator.cpp 
+ ${MESHOPTIMIZER_PATH}/vcacheoptimizer.cpp
+ ${MESHOPTIMIZER_PATH}/overdrawoptimizer.cpp
+ ${MESHOPTIMIZER_PATH}/vfetchoptimizer.cpp) 
 
 #Here I set the compiler. I will use g++ compiler for .cpp files 
 message(STATUS "Using ${CMAKE_GENERATOR}")

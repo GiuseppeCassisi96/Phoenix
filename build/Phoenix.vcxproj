@@ -345,6 +345,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\simplifier.cpp" />
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\meshoptimizer.h" />
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\clusterizer.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\indexgenerator.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\vcacheoptimizer.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\overdrawoptimizer.cpp" />
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\vfetchoptimizer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="C:\UNIMI\TESI\Phoenix\build\ZERO_CHECK.vcxproj">

@@ -14,6 +14,8 @@ namespace Minerva
         const std::string FONTS_PATH = "C:/UNIMI/TESI/Phoenix/src/Minerva/Fonts/";
         ImFont* font;
         EngineStartup* engine;
+        float frame = 0.0f;
+        float sumFramerates = 0.0f; 
 
         MinervaUI() = default;
         ~MinervaUI();

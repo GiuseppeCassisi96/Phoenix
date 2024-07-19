@@ -13,10 +13,11 @@ namespace Minerva
         std::optional<uint32_t> phoenixFamily;
         /*Is a presentation queue which presents images to the surface created in Window class*/
         std::optional<uint32_t> presentFamily;
+        std::optional<uint32_t> computeFamily;
 
         bool IsComplete() const
         {
-            return phoenixFamily.has_value() && presentFamily.has_value();
+            return phoenixFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
         }
     };
 

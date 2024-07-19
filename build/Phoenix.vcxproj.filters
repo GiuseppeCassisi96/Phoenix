@@ -82,6 +82,18 @@
     <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\clusterizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\indexgenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\vcacheoptimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\overdrawoptimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\vfetchoptimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\UNIMI\TESI\Phoenix\Dependencies\Meshoptimizer\src\meshoptimizer.h">

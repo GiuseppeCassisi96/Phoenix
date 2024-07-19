@@ -16,11 +16,25 @@ namespace Phoenix
         int meshletID = 0;
         float error = 0.0f;
         float parentError = 0.0f;
-        float errorThreshold = 0.0f;
         int lod = 0;
+        int numberOfInstance = -1;
+    };
+
+    struct ConstantData
+    {
+        alignas(16) glm::vec3 instancesPos;
+        int numberOfMeshlet = 0;
+        int numberOfInstances = -1;
         int width = 0;
         float hfov = 0.0f;
-        bool isSelected = false;
+        float errorThreshold = 0.0f;
+    };
+
+    struct alignas(16) OutputData
+    {
+        int index = 0;
+        int ID = -1;
+        int instanceNumber = 0;
     };
 
     class LODSelectionDispatcher
@@ -31,16 +45,13 @@ namespace Phoenix
         float errorThreshold = 0.0f;
         float lastAvgLod = 0.0f;
         std::vector<InputComputeData> inputData;
+        std::vector<ConstantData> constantData;
+        std::vector<OutputData> outputData;
         std::vector<PhoenixMeshlet> meshletForSelection;
+        
         
 
         void PrepareComputeData(const std::vector<PhoenixMeshlet>&  totalMeshlets, float hFOV, int width);
-        std::vector<uint32_t> LodSelector(int width, float hFov,
-        const glm::vec3& instancePos, std::vector<MINERVA_VERTEX>& vertexBuffer,
-        Minerva::Transformation& tr, PhoenixMesh& mesh, int& vertexCount);
-
-        float ComputeScreenSpaceError(PhoenixBound bound,float groupError,int width, 
-        float hFov, const glm::vec3& instancePos, const glm::mat4& modelView);
 
         LODSelectionDispatcher() = default;
         ~LODSelectionDispatcher() = default;

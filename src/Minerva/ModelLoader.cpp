@@ -88,7 +88,8 @@ namespace Minerva
         info.numberOfBones = mesh->mNumBones;
         info.numberOfPolygons = mesh->mNumFaces;
         info.numberOfVertices = mesh->mNumVertices;
-        std::cout << "\n\nFirst vertices num: " << mesh->mNumVertices << "\n\n";
+        std::cout << "\n\nFirst vertices num: " << mesh->mNumVertices << "\n";
+        std::cout << "First triangle num: " << mesh->mNumFaces << "\n\n";
         return createdMesh;
     }
     void ModelLoader::PrepareInstanceData(SampleType type)
