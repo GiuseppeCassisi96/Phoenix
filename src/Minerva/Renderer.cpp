@@ -203,29 +203,15 @@ namespace Minerva
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
             Mesh* mesh = &engineModLoader.sceneMeshes[0];
-            VkBuffer vertexBuffers[] = {mesh->meshBuffer.vertexBuffer[currentFrame]};
+            VkBuffer vertexBuffers[] = {mesh->meshBuffer.vertexBuffer};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindVertexBuffers(commandBuffer, 1, 1, &engineModLoader.instanceBuffer.buffer, offsets);
             vkCmdBindIndexBuffer(commandBuffer, mesh->meshBuffer.indexBuffer[currentFrame], 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
             enginePipeline.pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            if(renderMode == Mode::Phoenix)
-            {
-               vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, 0, 
-               indirectCommands.size(), sizeof(VkDrawIndexedIndirectCommand));
-            }
-            else
-            {
-                for (auto indirectCmd : indirectCommands)
-                {
-                    for (uint32_t j = 0; j < indirectCmd.instanceCount; j++)
-                    {
-                        vkCmdDrawIndexed(commandBuffer, indirectCmd.indexCount, 1, 
-                        indirectCmd.firstIndex, 0, indirectCmd.firstInstance + j);
-                    }
-                }
-            }
+            vkCmdDrawIndexedIndirect(commandBuffer, indirectCommandsBuffer.buffer, 0, 
+            indirectCommands.size(), sizeof(VkDrawIndexedIndirectCommand));
     
             engineUI.RenderUI(commandBuffers[currentFrame]);
 
@@ -250,7 +236,6 @@ namespace Minerva
             throw std::runtime_error("failed to acquire swap chain image!");
         }
         UpdateIndexBuffer();
-        UpdateVertexBuffer();
         UpdateIndirectData();
         vkResetFences(engineDevice.logicalDevice, 1, &inFlightFences[currentFrame]);
         vkResetCommandBuffer(commandBuffers[currentFrame],  0);
@@ -335,23 +320,24 @@ namespace Minerva
         //
         Mesh* mesh = &engineModLoader.sceneMeshes[0];
         VkDeviceSize bufferSize = sizeof(engineModLoader.sceneMeshes[0].vertices[0]) 
-        * engineModLoader.sceneMeshes[0].vertices.size() * engineModLoader.instanceNumber;
+        * engineModLoader.sceneMeshes[0].vertices.size();
 
         mesh->meshBuffer.size = bufferSize;
 
-        mesh->meshBuffer.vertexBuffer.resize(MAX_FRAMES_IN_FLIGHT);
-        mesh->meshBuffer.vertexBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
-        mesh->meshBuffer.vertexBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT 
+        | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
+        void* data;
+        vkMapMemory(engineDevice.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+            memcpy(data, mesh->vertices.data(), (size_t) bufferSize);
+        vkUnmapMemory(engineDevice.logicalDevice, stagingBufferMemory);
 
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            engineRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-            mesh->meshBuffer.vertexBuffer[i], mesh->meshBuffer.vertexBufferMemory[i]);
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh->meshBuffer.vertexBuffer, mesh->meshBuffer.vertexBufferMemory);
 
-            vkMapMemory(engineDevice.logicalDevice, mesh->meshBuffer.vertexBufferMemory[i], 0,
-            bufferSize, 0, &mesh->meshBuffer.vertexBufferMapped[i]);
-        }
+        CopyBuffer(stagingBuffer, mesh->meshBuffer.vertexBuffer, bufferSize);
     }
 
     void Renderer::CreateInstanceBuffer()
@@ -400,7 +386,7 @@ namespace Minerva
         animLayoutBinding.binding = 2;
         animLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         animLayoutBinding.descriptorCount = 1;
-        animLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        animLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
 
         VkDescriptorSetLayoutBinding SSBOLastFrameBinding{};
         SSBOLastFrameBinding.binding = 3;
@@ -749,8 +735,7 @@ namespace Minerva
             indirectCmd.vertexOffset = i * vertexBuffer.size();
             indirectCmd.indexCount = indexBuffer.size();
             indirectCmd.firstInstance = i; //Costant
-            //Is 1 because I consider each "instace model" as a different model
-            indirectCmd.instanceCount = 1; //Costant
+            indirectCmd.instanceCount = engineModLoader.instanceNumber; //Costant
             indirectCommands.emplace_back(indirectCmd);
         }
 
@@ -835,13 +820,6 @@ namespace Minerva
 
     }
 
-    void Renderer::UpdateVertexBuffer()
-    {
-        Mesh* mesh = &engineModLoader.sceneMeshes[0];
-        VkDeviceSize bufferSize = sizeof(mesh->vertices[0]) * mesh->vertices.size();
-
-        memcpy(mesh->meshBuffer.vertexBufferMapped[currentFrame], mesh->vertices.data(),(size_t) bufferSize);
-    }
 
     void Renderer::CreateIndexBuffer()
     {

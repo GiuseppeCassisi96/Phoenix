@@ -1,7 +1,7 @@
 #include "EngineStartup.h"
 #include <iostream>
 #include "Phoenix/PhoenixMesh.h"
-#include "Phoenix/LODSelectionDispatcher.h"
+#include "Phoenix/PhoenixSelection.h"
 #include <chrono>
 #include <algorithm>
 
@@ -47,6 +47,8 @@ namespace Minerva
         Start();
         Loop();
         debugLayer.DestroyDebugUtilsMessengerEXT(engineInstance.instance,debugLayer.debugMessenger,nullptr);
+        vkDestroyBuffer(engineDevice.logicalDevice, engineModLoader.sceneMeshes[0].meshBuffer.vertexBuffer, nullptr);
+        vkFreeMemory(engineDevice.logicalDevice, engineModLoader.sceneMeshes[0].meshBuffer.vertexBufferMemory, nullptr);
     }
 
     void EngineStartup::Start()
@@ -56,21 +58,21 @@ namespace Minerva
         samplesTest["0"].scale = 600.0f;
         samplesTest["0"].rowDim = 5;
         samplesTest["0"].distanceMultiplier = 1400.0f;
-        samplesTest["0"].tError = 1.2f;
+        samplesTest["0"].tError = 1.0f;
 
         samplesTest["1"].modelName = "dancer.obj";
         samplesTest["1"].textureName = "dancerColor.jpg";
         samplesTest["1"].scale = 1.0f;
-        samplesTest["1"].rowDim = 20;
+        samplesTest["1"].rowDim = 10;
         samplesTest["1"].distanceMultiplier = 1400.0f;
-        samplesTest["1"].tError = 1.6f;
+        samplesTest["1"].tError = 1.4f;
 
-        samplesTest["2"].modelName = "teapot.fbx";
-        samplesTest["2"].textureName = "teepotColor.png";
-        samplesTest["2"].scale = 20.0f;
-        samplesTest["2"].rowDim = 20;
+        samplesTest["2"].modelName = "moonRock.obj";
+        samplesTest["2"].textureName = "rockColor.jpeg";
+        samplesTest["2"].scale = 1600.0f;
+        samplesTest["2"].rowDim = 10;
         samplesTest["2"].distanceMultiplier = 1000.0f;
-        samplesTest["2"].tError = 0.8f;
+        samplesTest["2"].tError = 0.4f;
 
         samplesTest["3"].animNumber = 3;
         samplesTest["3"].animName.emplace_back("monsterIdle.fbx");
@@ -81,7 +83,7 @@ namespace Minerva
         samplesTest["3"].scale = 1.0f;
         samplesTest["3"].rowDim = 40;
         samplesTest["3"].distanceMultiplier = 400.0f;
-        samplesTest["3"].tError = 7.0f;
+        samplesTest["3"].tError = 4.0f;
    
         std::string key;
         std::string choose;
@@ -89,7 +91,7 @@ namespace Minerva
         std::cout << "Choose the model which you want rendered: \n"
         << "Insert '0' to render the submarine static model\n"
         << "Insert '1' to render the dancer static model\n"
-        << "Insert '2' to render the teapot static model\n"
+        << "Insert '2' to render the rock static model\n"
         << "Insert '3' to render the skeletal model\n" ;
         std::cin >> key;
         assert(key == "1" || key == "0" || key == "2" || key == "3");
@@ -147,12 +149,19 @@ namespace Minerva
             animator.CreateAnimator(&animations[0]);
         }
         
+        if(engineRenderer.renderMode == Mode::Phoenix)
+        {
+            auto startTime = std::chrono::high_resolution_clock::now();
+            phoenixMesh.BuildLodsHierarchy(engineModLoader.sceneMeshes[0].vertices, engineModLoader.sceneMeshes[0].indices);
+            auto endTime = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> amount = endTime - startTime;
+            std::cout << "S: " << amount << "\n";
+        }
+        else
+        {
+            phoenixMesh.totalMeshlets.resize(1);
+        }
         
-        auto startTime = std::chrono::high_resolution_clock::now();
-        phoenixMesh.BuildLodsHierarchy(engineModLoader.sceneMeshes[0].vertices, engineModLoader.sceneMeshes[0].indices);
-        auto endTime = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> amount = endTime - startTime;
-        std::cout << "S: " << amount << "\n";
 
         engineModLoader.PrepareInstanceData(choosenSample);
         engineRenderer.PrepareIndirectData(engineModLoader.sceneMeshes[0].indices, engineModLoader.sceneMeshes[0].vertices);
@@ -207,7 +216,6 @@ namespace Minerva
         while (!glfwWindowShouldClose(windowInstance.window)) 
         {
             engineModLoader.sceneMeshes[0].indices.clear();
-            engineModLoader.sceneMeshes[0].vertices.clear();
             engineRenderer.UpdateUniformBuffer(engineRenderer.currentFrame);
             int numberOfVertex = 0;
 
@@ -239,28 +247,26 @@ namespace Minerva
                     
                 }
                 
-                
+
                 for (size_t i = 0; i < engineModLoader.instanceNumber; i++)
                 {
-                    std::vector<uint32_t>* currenIndex = &instanceIndexBuffer[i];
+                    std::vector<uint32_t>* currentIndex = &instanceIndexBuffer[i];
                     VkDrawIndexedIndirectCommand* currentIndirectCommand = &engineRenderer.indirectCommands[i];
-                    if(currenIndex->size() > indexMaxSize)
-                        currenIndex->resize(indexMaxSize);
+                    if(currentIndex->size() > indexMaxSize)
+                        currentIndex->resize(indexMaxSize);
                     //Indirect data update     
                     currentIndirectCommand->firstIndex = indexOffset;
                     currentIndirectCommand->vertexOffset = vertexOffset;
-                    currentIndirectCommand->indexCount = static_cast<uint32_t>(currenIndex->size());
-                    indexOffset += static_cast<uint32_t>(currenIndex->size());
+                    currentIndirectCommand->indexCount = static_cast<uint32_t>(currentIndex->size());
+                    indexOffset += static_cast<uint32_t>(currentIndex->size());
                     vertexOffset += static_cast<uint32_t>(instanceVertexBuffer.size());
                     
                     engineModLoader.sceneMeshes[0].indices.insert(engineModLoader.sceneMeshes[0].indices.end(), 
-                    currenIndex->begin(), currenIndex->end());
-                    engineModLoader.sceneMeshes[0].vertices.insert(engineModLoader.sceneMeshes[0].vertices.end(),
-                    instanceVertexBuffer.begin(), instanceVertexBuffer.end()); 
+                    currentIndex->begin(), currentIndex->end());
 
-                    engineModLoader.info.numberOfPolygons += (currenIndex->size() / 3);
+                    engineModLoader.info.numberOfPolygons += (currentIndex->size() / 3);
 
-                    currenIndex->clear();
+                    currentIndex->clear();
 
                     
                 
@@ -297,7 +303,7 @@ namespace Minerva
                 {   
                     std::vector<uint32_t> instanceIndexBuffer;     
 
-                    instanceIndexBuffer = constantIndexBuffer;
+                    instanceIndexBuffer = std::move(constantIndexBuffer);
                     
                     //Indirect data update     
                     engineRenderer.indirectCommands[i].firstIndex = indexOffset;
@@ -308,9 +314,8 @@ namespace Minerva
                     
                     engineModLoader.sceneMeshes[0].indices.insert(engineModLoader.sceneMeshes[0].indices.end(), 
                     instanceIndexBuffer.begin(), instanceIndexBuffer.end());
-                    engineModLoader.sceneMeshes[0].vertices.insert(engineModLoader.sceneMeshes[0].vertices.end(),
-                    instanceVertexBuffer.begin(), instanceVertexBuffer.end());  
-                     
+                    
+                    constantIndexBuffer = std::move(instanceIndexBuffer);
                 }
                 engineRenderer.DrawFrame();
             }
@@ -320,6 +325,8 @@ namespace Minerva
         }
         std::cout << "Avg framerate: " << engineUI.sumFramerates / engineUI.frame << "\n";
         vkDeviceWaitIdle(engineDevice.logicalDevice);
+
+        
     }
 
     

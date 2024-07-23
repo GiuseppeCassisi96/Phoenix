@@ -3,7 +3,7 @@
 #include "vector"
 #include "Mesh.h"
 #include "Phoenix/PhoenixMesh.h"
-#include "Phoenix/LODSelectionDispatcher.h"
+#include "Phoenix/PhoenixSelection.h"
 
 
 namespace Minerva
@@ -111,7 +111,6 @@ namespace Minerva
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         void CreateColorResources();
         void UpdateIndexBuffer();
-        void UpdateVertexBuffer();
         void CreateIndexBuffer();
         void DispatchCompute(int numberOfMeshlets);
         void InitialDispatchCompute(int numberOfMeshlets, void* outData);

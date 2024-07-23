@@ -75,5 +75,7 @@ namespace Minerva
         direction.z = static_cast<float>(sin(glm::radians(pitch)));
         direction.x *= -1.0f;
         cameraForward = glm::normalize(direction);
+        cameraRight = glm::normalize(glm::cross(cameraForward, glm::vec3(0.0f, 0.0f, 1.0f)));
+        cameraUp = glm::normalize(glm::cross(cameraRight, cameraForward));
     }
 }

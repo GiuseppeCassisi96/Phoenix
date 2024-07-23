@@ -256,15 +256,6 @@ namespace Phoenix
                 meshlet->meshletIndexBuffer.emplace_back(index);
                 groupIndexBuffer.emplace_back(index);    
             }
-
-/*             meshopt_Meshlet* m = &meshlet->meshletData;
-            meshopt_optimizeVertexCache(meshlet->meshletIndexBuffer.data(), meshlet->meshletIndexBuffer.data(), 
-            meshlet->meshletIndexBuffer.size(), prevLod.lodVertexBuffer.size());
-            meshopt_optimizeOverdraw(meshlet->meshletIndexBuffer.data(), meshlet->meshletIndexBuffer.data(), 
-            meshlet->meshletIndexBuffer.size(), &prevLod.lodVertexBuffer[0].pos.x, prevLod.lodVertexBuffer.size(), 
-            sizeof(MINERVA_VERTEX), 1.05f);
-            meshopt_optimizeMeshlet(&prevLod.lodMeshletsClusterIndex[m->vertex_offset], 
-            &prevLod.lodMeshletsClusterTriangle[m->triangle_offset], m->triangle_count, m->vertex_count); */
         }
           
     }
@@ -383,7 +374,6 @@ namespace Phoenix
             glm::vec3 center{meshletBound.center[0], meshletBound.center[1],
             meshletBound.center[2]};
             meshletCenters.emplace_back(center);
-            
         }
         PhoenixBound currentBound;
         for(size_t i = meshletArrayOffset; i < localmeshlets.size() + meshletArrayOffset; i++)

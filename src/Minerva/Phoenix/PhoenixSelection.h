@@ -18,6 +18,7 @@ namespace Phoenix
         float parentError = 0.0f;
         int lod = 0;
         int numberOfInstance = -1;
+        
     };
 
     struct ConstantData
@@ -37,6 +38,7 @@ namespace Phoenix
         int instanceNumber = 0;
     };
 
+
     class LODSelectionDispatcher
     {
     public:
@@ -48,9 +50,6 @@ namespace Phoenix
         std::vector<ConstantData> constantData;
         std::vector<OutputData> outputData;
         std::vector<PhoenixMeshlet> meshletForSelection;
-        
-        
-
         void PrepareComputeData(const std::vector<PhoenixMeshlet>&  totalMeshlets, float hFOV, int width);
 
         LODSelectionDispatcher() = default;

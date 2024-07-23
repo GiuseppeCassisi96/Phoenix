@@ -14,11 +14,6 @@ namespace Minerva
             vkDestroyBuffer(engineDevice.logicalDevice, meshBuffer.indexBuffer[i], nullptr);
             vkFreeMemory(engineDevice.logicalDevice, meshBuffer.indexBufferMemory[i], nullptr);
         }
-        for(int i = 0; i < meshBuffer.vertexBuffer.size(); i++)
-        {  
-            vkDestroyBuffer(engineDevice.logicalDevice, meshBuffer.vertexBuffer[i], nullptr);
-            vkFreeMemory(engineDevice.logicalDevice, meshBuffer.vertexBufferMemory[i], nullptr);
-        }
     }
 
     Mesh::Mesh(Mesh &&other) noexcept
@@ -39,11 +34,11 @@ namespace Minerva
             vkDestroyBuffer(engineDevice.logicalDevice, meshBuffer.indexBuffer[i], nullptr);
             vkFreeMemory(engineDevice.logicalDevice, meshBuffer.indexBufferMemory[i], nullptr);
         } 
-        for(int i = 0; i < meshBuffer.vertexBuffer.size(); i++)
-        {  
-            vkDestroyBuffer(engineDevice.logicalDevice, meshBuffer.vertexBuffer[i], nullptr);
-            vkFreeMemory(engineDevice.logicalDevice, meshBuffer.vertexBufferMemory[i], nullptr);
-        }
+        if(meshBuffer.vertexBuffer != VK_NULL_HANDLE)
+        {
+            vkDestroyBuffer(engineDevice.logicalDevice, meshBuffer.vertexBuffer, nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, meshBuffer.vertexBufferMemory, nullptr);
+        }     
 
     }
     Mesh &Mesh::operator=(Mesh &&other) noexcept
@@ -64,10 +59,10 @@ namespace Minerva
             vkDestroyBuffer(engineDevice.logicalDevice, meshBuffer.indexBuffer[i], nullptr);
             vkFreeMemory(engineDevice.logicalDevice, meshBuffer.indexBufferMemory[i], nullptr);
         } 
-        for(int i = 0; i < meshBuffer.vertexBuffer.size(); i++)
-        {  
-            vkDestroyBuffer(engineDevice.logicalDevice, meshBuffer.vertexBuffer[i], nullptr);
-            vkFreeMemory(engineDevice.logicalDevice, meshBuffer.vertexBufferMemory[i], nullptr);
+        if(meshBuffer.vertexBuffer != VK_NULL_HANDLE)
+        {
+            vkDestroyBuffer(engineDevice.logicalDevice, meshBuffer.vertexBuffer, nullptr);
+            vkFreeMemory(engineDevice.logicalDevice, meshBuffer.vertexBufferMemory, nullptr);
         }
         
         return *this;
