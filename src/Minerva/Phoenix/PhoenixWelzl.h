@@ -14,8 +14,8 @@ namespace Phoenix
     {
     public:
      
-        PhoenixBound ExecuteWelzl(std::vector<glm::vec3> &points, std::vector<glm::vec3 > rPoints, 
-        int vertexCount);
+        PhoenixBound ExecuteWelzl( std::vector<glm::vec3> &points, std::vector<glm::vec3 > rPoints, 
+        int pointCount);
         PhoenixWelzl() = default;
         ~PhoenixWelzl() = default;
     private:

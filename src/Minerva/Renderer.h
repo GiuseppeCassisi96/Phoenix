@@ -55,7 +55,6 @@ namespace Minerva
         VkRenderPass renderPass;
         std::vector<VkFramebuffer> swapChainFramebuffers;
         VkCommandPool commandPool; 
-        VkCommandPool computeCommandPool; 
         std::vector<VkCommandBuffer> commandBuffers;
         std::vector<VkCommandBuffer> computeCommandBuffers;
         std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -80,7 +79,6 @@ namespace Minerva
         void CreateRenderPass();
         void CreateFramebuffers();
         void CreateCommandPool();
-        void CreateComputeCommandPool();
         void CreateCommandBuffer();
         void CreateComputeCommandBuffer();
         void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);

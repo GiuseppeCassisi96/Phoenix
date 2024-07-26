@@ -162,13 +162,9 @@ namespace Minerva
             {
                 indices.presentFamily = index;
             }
-            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
             {
                 indices.phoenixFamily = index;
-            }
-            if(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
-            {
-                indices.computeFamily = index;
             }
             index++;
         }
@@ -178,8 +174,7 @@ namespace Minerva
     {
         deviceFamilies = FindQueueFamilies(physicalDevice, windowSurface);
         std::vector<VkDeviceQueueCreateInfo> queuesInfo {};
-        std::set<uint32_t> engineFamilies {deviceFamilies.phoenixFamily.value(), deviceFamilies.presentFamily.value(), 
-        deviceFamilies.computeFamily.value()};
+        std::set<uint32_t> engineFamilies {deviceFamilies.phoenixFamily.value(), deviceFamilies.presentFamily.value()};
         float queuePriority = 1.0f;
         for(auto engineFamily : engineFamilies)
         {
@@ -218,7 +213,7 @@ namespace Minerva
             throw std::runtime_error("failed to create logical device!");
         }
         vkGetDeviceQueue(logicalDevice, deviceFamilies.phoenixFamily.value(), 0, &graphicsQueue);
-        vkGetDeviceQueue(logicalDevice, deviceFamilies.computeFamily.value(), 0, &computeQueue);
+        vkGetDeviceQueue(logicalDevice, deviceFamilies.phoenixFamily.value(), 0, &computeQueue);
         vkGetDeviceQueue(logicalDevice, deviceFamilies.presentFamily.value(), 0, &presentationQueue);
     }
 
@@ -446,8 +441,7 @@ namespace Minerva
 
 
         QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, windowInstance.windowSurface);
-        uint32_t queueFamilyIndices[] = {indices.phoenixFamily.value(), indices.presentFamily.value(),
-        indices.computeFamily.value()};
+        uint32_t queueFamilyIndices[] = {indices.phoenixFamily.value(), indices.presentFamily.value()};
 
         if (indices.phoenixFamily != indices.presentFamily) 
         {

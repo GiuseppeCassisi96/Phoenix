@@ -5,7 +5,7 @@
 namespace Phoenix
 {
     void LODSelectionDispatcher::PrepareComputeData(const std::vector<PhoenixMeshlet>&  totalMeshlets,
-    float hFOV, int width)
+    float hFOV, int height)
     {
         meshletForSelection = totalMeshlets;
         size_t size = totalMeshlets.size() * Minerva::engineModLoader.instanceNumber;
@@ -20,7 +20,7 @@ namespace Phoenix
             constantData[j].numberOfInstances = Minerva::engineModLoader.instanceNumber;
             constantData[j].errorThreshold = errorThreshold;
             constantData[j].hfov = hFOV;
-            constantData[j].width = width;
+            constantData[j].height = height;
             for(int i = j * totalMeshlets.size(); i < totalMeshlets.size() + 
             (j * totalMeshlets.size()); i++)
             {
@@ -36,6 +36,7 @@ namespace Phoenix
         }
         outputData[0].index = 0;
         size_t currentSize = 0;
+        //In this way avoid to waste warp. At maximum I waste 1 warp 
         while(currentSize <= size)
         {
             RENDERER.computeWorkgroup++;

@@ -98,6 +98,8 @@ namespace Minerva
         float row = 0.0f;
         instancesData.resize(instanceNumber);
 
+        std::vector<Mesh::Vertex> constantVertexBuffer = sceneMeshes[0].vertices;
+        sceneMeshes[0].vertices.clear();
         for(int i = 0; i < instanceNumber; i++)
         {   
             counter++;
@@ -108,8 +110,11 @@ namespace Minerva
                 row++;
             }
             instancesData[i].instanceScale = type.scale;
-            
+            sceneMeshes[0].vertices.insert(sceneMeshes[0].vertices.end(), constantVertexBuffer.begin(), 
+            constantVertexBuffer.end());
         }
+
+        
 
         instanceBuffer.size = instancesData.size() * sizeof(InstanceData);
     }

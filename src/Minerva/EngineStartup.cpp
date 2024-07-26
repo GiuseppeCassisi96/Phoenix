@@ -57,22 +57,22 @@ namespace Minerva
         samplesTest["0"].textureName = "submarineColor.png";
         samplesTest["0"].scale = 600.0f;
         samplesTest["0"].rowDim = 5;
-        samplesTest["0"].distanceMultiplier = 1400.0f;
-        samplesTest["0"].tError = 1.0f;
+        samplesTest["0"].distanceMultiplier = 2100.0f;
+        samplesTest["0"].tError = 0.3f;
 
         samplesTest["1"].modelName = "dancer.obj";
         samplesTest["1"].textureName = "dancerColor.jpg";
         samplesTest["1"].scale = 1.0f;
-        samplesTest["1"].rowDim = 10;
-        samplesTest["1"].distanceMultiplier = 1400.0f;
-        samplesTest["1"].tError = 1.4f;
+        samplesTest["1"].rowDim = 5;
+        samplesTest["1"].distanceMultiplier = 2100.0f;
+        samplesTest["1"].tError = 0.6f;
 
         samplesTest["2"].modelName = "moonRock.obj";
         samplesTest["2"].textureName = "rockColor.jpeg";
         samplesTest["2"].scale = 1600.0f;
-        samplesTest["2"].rowDim = 10;
-        samplesTest["2"].distanceMultiplier = 1000.0f;
-        samplesTest["2"].tError = 0.4f;
+        samplesTest["2"].rowDim = 5;
+        samplesTest["2"].distanceMultiplier = 1200.0f;
+        samplesTest["2"].tError = 0.1f;
 
         samplesTest["3"].animNumber = 3;
         samplesTest["3"].animName.emplace_back("monsterIdle.fbx");
@@ -81,9 +81,9 @@ namespace Minerva
         samplesTest["3"].modelName = "monster.fbx";
         samplesTest["3"].textureName = "monsterColor.png";
         samplesTest["3"].scale = 1.0f;
-        samplesTest["3"].rowDim = 40;
-        samplesTest["3"].distanceMultiplier = 400.0f;
-        samplesTest["3"].tError = 4.0f;
+        samplesTest["3"].rowDim = 30;
+        samplesTest["3"].distanceMultiplier = 1000.0f;
+        samplesTest["3"].tError = 0.3f;
    
         std::string key;
         std::string choose;
@@ -126,7 +126,6 @@ namespace Minerva
         enginePipeline.CreatePipeline("vert", "frag");
         enginePipeline.CreateComputePipeline("comp");
         engineRenderer.CreateCommandPool();
-        engineRenderer.CreateComputeCommandPool();
         engineRenderer.CreateColorResources();
         engineRenderer.CreateDepthResources();
         engineRenderer.CreateFramebuffers();
@@ -165,7 +164,7 @@ namespace Minerva
 
         engineModLoader.PrepareInstanceData(choosenSample);
         engineRenderer.PrepareIndirectData(engineModLoader.sceneMeshes[0].indices, engineModLoader.sceneMeshes[0].vertices);
-        dispatcher.PrepareComputeData(phoenixMesh.totalMeshlets, glm::radians(45.0f), windowInstance.WIDTH);
+        dispatcher.PrepareComputeData(phoenixMesh.totalMeshlets, glm::radians(45.0f), windowInstance.HEIGHT);
         
         engineRenderer.CreateVertexBuffer();
         engineRenderer.CreateInstanceBuffer();
@@ -197,7 +196,8 @@ namespace Minerva
     {
         engineRenderer.UpdateUniformBuffer(engineRenderer.currentFrame);
         size_t indexMaxSize = engineModLoader.sceneMeshes[0].indices.size();
-        std::vector<Mesh::Vertex> instanceVertexBuffer = engineModLoader.sceneMeshes[0].vertices;
+        size_t singleVertexSize = engineModLoader.sceneMeshes[0].vertices.size() 
+        / engineModLoader.instanceNumber;
         std::vector<uint32_t> constantIndexBuffer = engineModLoader.sceneMeshes[0].indices;
         std::vector<std::vector<uint32_t>> instanceIndexBuffer; 
         instanceIndexBuffer.resize(engineModLoader.instanceNumber, std::vector<uint32_t>(0));
@@ -209,7 +209,6 @@ namespace Minerva
         std::vector<Phoenix::OutputData> selectedMeshlet;
         selectedMeshlet.resize(phoenixMesh.totalMeshlets.size() * engineModLoader.instanceNumber);
         engineRenderer.InitialDispatchCompute(phoenixMesh.totalMeshlets.size(), selectedMeshlet.data());
-
 
 
         //GAME LOOP
@@ -247,7 +246,6 @@ namespace Minerva
                     
                 }
                 
-
                 for (size_t i = 0; i < engineModLoader.instanceNumber; i++)
                 {
                     std::vector<uint32_t>* currentIndex = &instanceIndexBuffer[i];
@@ -259,28 +257,25 @@ namespace Minerva
                     currentIndirectCommand->vertexOffset = vertexOffset;
                     currentIndirectCommand->indexCount = static_cast<uint32_t>(currentIndex->size());
                     indexOffset += static_cast<uint32_t>(currentIndex->size());
-                    vertexOffset += static_cast<uint32_t>(instanceVertexBuffer.size());
+                    vertexOffset += static_cast<uint32_t>(singleVertexSize);
                     
                     engineModLoader.sceneMeshes[0].indices.insert(engineModLoader.sceneMeshes[0].indices.end(), 
                     currentIndex->begin(), currentIndex->end());
 
                     engineModLoader.info.numberOfPolygons += (currentIndex->size() / 3);
 
+                    
                     currentIndex->clear();
-
-                    
-                
+   
                 }
-                    
                 //UI scene info update
                 engineModLoader.info.numberOfVertices = currentVertexCount;
                 engineModLoader.info.numberOfPolygons = currentTriangleCount;
+                engineRenderer.DrawFrame();
 
                 selectedMeshlet[0].index = 0;  
                 memcpy(engineRenderer.OutputMappedSSBO[engineRenderer.currentComputeFrame], 
                 selectedMeshlet.data(), sizeof(int));
-
-                engineRenderer.DrawFrame();
 
                 VkDeviceSize outBufferSize = (sizeof(Phoenix::OutputData) * phoenixMesh.totalMeshlets.size()) 
                 * engineModLoader.instanceNumber;
@@ -300,22 +295,18 @@ namespace Minerva
             else
             {
                 for(int i = 0; i < engineModLoader.instanceNumber; i++)
-                {   
-                    std::vector<uint32_t> instanceIndexBuffer;     
-
-                    instanceIndexBuffer = std::move(constantIndexBuffer);
-                    
+                {  
+                            
                     //Indirect data update     
                     engineRenderer.indirectCommands[i].firstIndex = indexOffset;
                     engineRenderer.indirectCommands[i].vertexOffset = vertexOffset;
-                    engineRenderer.indirectCommands[i].indexCount = static_cast<uint32_t>(instanceIndexBuffer.size());
-                    indexOffset += static_cast<uint32_t>(instanceIndexBuffer.size());
-                    vertexOffset += static_cast<uint32_t>(instanceVertexBuffer.size());
+                    engineRenderer.indirectCommands[i].indexCount = static_cast<uint32_t>(constantIndexBuffer.size());
+                    indexOffset += static_cast<uint32_t>(constantIndexBuffer.size());
+                    vertexOffset += static_cast<uint32_t>(singleVertexSize);
                     
                     engineModLoader.sceneMeshes[0].indices.insert(engineModLoader.sceneMeshes[0].indices.end(), 
-                    instanceIndexBuffer.begin(), instanceIndexBuffer.end());
+                    constantIndexBuffer.begin(), constantIndexBuffer.end());
                     
-                    constantIndexBuffer = std::move(instanceIndexBuffer);
                 }
                 engineRenderer.DrawFrame();
             }

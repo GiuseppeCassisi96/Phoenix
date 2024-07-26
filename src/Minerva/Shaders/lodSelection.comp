@@ -25,7 +25,7 @@ struct ConstantData
    vec3 instancesPos;
    int numberOfMeshlet;
    int numberOfInstances;
-   int width;
+   int height;
    float hfov;
    float errorThreshold;
 };
@@ -57,24 +57,36 @@ layout(std140, binding = 5) buffer SSBOSelectedData
 
 const int MAX_LOD_NUMBER = 5;
 
-float ComputeScreenSpaceError(vec3 centerBound, float groupError, int width, 
+float ComputeScreenSpaceError(vec3 centerBound, float groupError, int height, 
 float hfov, vec3 instancePos, mat4 modelView)
 {
    centerBound += instancePos;
    vec4 viewCenter = vec4(centerBound, 1.0f);
-   //I transform the center in view-space
+
    viewCenter = modelView * viewCenter;
    centerBound.x = viewCenter.x;
    centerBound.y = viewCenter.y;
-   centerBound.z = viewCenter.z;
-   float radius = length(vec3(modelView * vec4(groupError, 0, 0, 0 )));
+   centerBound.z = viewCenter.z; 
+   float radiusErrorViewSpace = length(vec3(modelView * vec4(groupError, 0, 0, 0 )));
 
    //https://stackoverflow.com/questions/21648630/radius-of-projected-sphere-in-screen-space
+   //https://jglrxavpok.github.io/2024/04/02/recreating-nanite-runtime-lod-selection.html#culling-at-runtime
+   /*In these instructions I simply convert the radius error in screen space, obtaining
+   in this way the screen space error*/
+
+   //It is the cotangent of the half FOV. Simple cotangent formula is: 1 / tan(phi)
    const float cotHalfFov = 1.0f / tan(hfov / 2.0f);
+   // ||centerBound|| * ||centerBound|| * cos(0)
    const float d2 = dot(centerBound, centerBound);
-   const float r = radius;
-   const float div = sqrt(d2 - r*r);
-   float screenSpaceError = (width / 2.0f * cotHalfFov * r) / div;
+   const float r = radiusErrorViewSpace;
+   //It is the distance between the eye and a point on the sphere "horizon"
+   const float l = sqrt(d2 - r*r);
+
+   //Projected radius
+   const float pr = (cotHalfFov * r) / l;
+
+   //error in screen space 
+   float screenSpaceError = (height / 2.0f) * pr;
    return screenSpaceError;
 }
 
@@ -86,13 +98,15 @@ void main()
    if(index >= constantData[0].numberOfMeshlet * constantData[0].numberOfInstances)
       return;
 
-   int modIndex = int(floor(index / (constantData[0].numberOfMeshlet)));
-   vec3 currentInstancePos = constantData[modIndex].instancesPos;
+   
    
    InputComputeData currentInputData = inputComputeData[index];
    mat4 modelView = ubo.view * ubo.model;
 
-   float currentError = ComputeScreenSpaceError(currentInputData.boundCenter, currentInputData.error, constantData[0].width,
+   int instanceIndex = currentInputData.numberOfInstance;
+   vec3 currentInstancePos = constantData[instanceIndex].instancesPos;
+
+   float currentError = ComputeScreenSpaceError(currentInputData.boundCenter, currentInputData.error, constantData[0].height,
    constantData[0].hfov, currentInstancePos, modelView);
    float parentError;
 
@@ -103,7 +117,7 @@ void main()
    else
    {
       parentError = ComputeScreenSpaceError(currentInputData.parentBoundCenter, currentInputData.parentError,
-      constantData[0].width, constantData[0].hfov, currentInstancePos, modelView);
+      constantData[0].height, constantData[0].hfov, currentInstancePos, modelView);
    }
    
 

@@ -18,6 +18,9 @@
 #define MINERVA_VERTEX Minerva::Mesh::Vertex
 /*Merge and Group methods are based on: https://jglrxavpok.github.io/2024/01/19/recreating-nanite-lod-generation.html
 post*/
+
+
+
 namespace Phoenix
 {
 
@@ -47,6 +50,7 @@ namespace Phoenix
         }
     };
     
+    /// @brief Represent my version of meshlet 
     struct PhoenixMeshlet
     {
         std::vector<uint32_t> meshletIndexBuffer;
@@ -60,12 +64,14 @@ namespace Phoenix
         int lod = 0;
     };
 
+    /// @brief Represent a group of meshlets 
     struct MeshletGroup
     {
+        /// @brief A group of meshlets is rapresented as a collection of ID 
         std::unordered_set<size_t> meshlets;
     };
 
-
+    /// @brief Rapresents a LOD 
     struct LOD
     {
         std::vector<PhoenixMeshlet> lodVerticesMeshlets;
@@ -80,19 +86,52 @@ namespace Phoenix
     {
     public:
         std::vector<LOD> lods;
+        /// @brief The instance of the PhoenixWelzl class that executes the Welzl algorithm 
         PhoenixWelzl welzl;
         int meshletID = 0;
+        //It is an array that contains the meshlets of all levels. It is, in certain sense, my version of DAG 
         std::vector<PhoenixMeshlet> totalMeshlets;
-        std::unordered_set<uint32_t> uniqueIndex;
+        unsigned int simplifyOptions = meshopt_SimplifySparse | meshopt_SimplifyLockBorder 
+        | meshopt_SimplifyErrorAbsolute;
         
+        
+        /// @brief It builds the lods hierarchy at the end of this processing the 'totalMeshlets' 
+        //vector  will be completely fill
+        /// @param vertices Is the vertex buffer of the loaded mesh
+        /// @param indices Is the index buffer of the loaded mesh
         void BuildLodsHierarchy(std::vector<MINERVA_VERTEX>& vertices, std::vector<uint32_t> &indices);
-        std::vector<MeshletGroup> Group(LOD& currentLod, LOD* prevLod = nullptr);
-        void Merge(const MeshletGroup& group, LOD& prevLod, std::vector<uint32_t>& groupIndexBuffer, 
-        std::unordered_set<uint32_t>& uniqueIndex);
-        size_t Simplify(std::vector<uint32_t>& groupIndexBuffer, const std::vector<MINERVA_VERTEX>& groupVertexBuffer, 
-        LOD& currentLod, float& outError);
+        /// @brief It groups each meshlets based on his adjacency in groups of 4 meshlets. 
+        /// @param currentLod The current lod which contains the meshlets that I want to group
+        /// @return The group of meshlets
+        std::vector<MeshletGroup> Group(LOD& currentLod);
+        /// @brief Create an index buffer of the grouped meshlets. The merge buffer optimize also the index buffer
+        /// @param group The group which contains the meshlets. The group belongs to the prev lod
+        /// @param prevLod The previus lod which contains the vertices indices created in the split operation
+        /// @param groupIndexBuffer The group index buffer that I want create
+        void Merge(const MeshletGroup& group, LOD& prevLod, std::vector<uint32_t>& groupIndexBuffer);
+        /// @brief It simplifies the group index buffer, it locks the border of the grouped meshlets 
+        /// to avoid cracks during lod selection 
+        /// @param groupIndexBuffer The group index buffer that I want simplify
+        /// @param vertices Vertex buffer of the loaded mesh, useful to compute the scaling factor 
+        /// @param currentLodLevel It is the current lod index useful to interpolate the target error  
+        /// @param outError The result error 
+        /// @return The dim of the simplify index buffer 
+        size_t Simplify(std::vector<uint32_t>& groupIndexBuffer, const std::vector<MINERVA_VERTEX>& vertices, 
+        int currentLodLevel, float& outError);
+        /// @brief It subdivides the simplified index buffer in meshlets 
+        /// @param currentLod I pass the current LOD in order to fill: the meshlet array, the vertices index array and
+        /// the triangle index array
+        /// @param groupIndexBuffer The simplified index buffer, useful to compute meshlets
+        /// @param error It is the simplification error, useful for the meshlet error
+        /// @param prevLod Is the previus LOD, it is useful to create parent relathionship
+        /// @param group It is the current group, which referes to the previus LOD
+        /// @param maxChildrenError is the max meshlet error of the previous LOD
         void Split(LOD& currentLod, std::vector<uint32_t> groupIndexBuffer, float error, LOD* prevLod, 
         MeshletGroup* group, float& maxChildrenError);
+        /// @brief It subdivide the initial index buffer in meshlets 
+        /// @param firstLod I pass the first LOD in order to fill: the meshlet array, the vertices index array and
+        /// the triangle index array
+        /// @param indexBuffer The initial index buffer, useful to compute meshlets
         void Split(LOD& firstLod, std::vector<uint32_t> indexBuffer);
         PhoenixMesh() = default;
         ~PhoenixMesh() = default;

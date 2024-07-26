@@ -2,6 +2,7 @@
 #include "glm/gtx/norm.hpp"
 #include <iostream>
 //https://www.geeksforgeeks.org/minimum-enclosing-circle-using-welzls-algorithm/
+//https://en.wikipedia.org/wiki/Smallest-circle_problem#Welzl's_algorithm
 namespace Phoenix
 {
     float PhoenixWelzl::Distance(const glm::vec3 &p1, const glm::vec3 &p2)
@@ -62,25 +63,30 @@ namespace Phoenix
         return ComputeBoundFrom3(points[0], points[1], points[2]);
     }
     PhoenixBound PhoenixWelzl::ExecuteWelzl(std::vector<glm::vec3> &points, std::vector<glm::vec3> rPoints, 
-    int vertexCount)
+    int pointCount)
     {
-        if(vertexCount == 0 || rPoints.size() == 3)
+        //Base case of recursion
+        if(pointCount == 0 || rPoints.size() == 3)
         {
             return MinimumCircle(rPoints);
         }
-        assert(vertexCount > 0);
-        int index = rand() % vertexCount;
+        assert(pointCount > 0);
+        //I get a random index and a point using that index
+        int index = rand() % pointCount;
         glm::vec3 point = points[index];
-        std::swap(points[index], points[vertexCount - 1]);
+        //I do the swap to exclude the point extracted from the next invocation
+        std::swap(points[index], points[pointCount - 1]);
 
-        PhoenixBound bound = ExecuteWelzl(points, rPoints, vertexCount-1);
+        PhoenixBound bound = ExecuteWelzl(points, rPoints, pointCount-1);
+        //If the point is inside the circle I found a valid circle
         if(IsInside(bound, point))
         {
             return bound;
         }
+        //otherwise I add the point to the boundary 
         rPoints.emplace_back(point);
 
-        return ExecuteWelzl(points, rPoints, vertexCount-1);
+        return ExecuteWelzl(points, rPoints, pointCount-1);
     }
     //https://stackoverflow.com/questions/13977354/build-circle-from-3-points-in-3d-space-implementation-in-c-or-c
     PhoenixBound PhoenixWelzl::ComputeBoundFrom3(const glm::vec3 &p1, const glm::vec3 &p2, const glm::vec3 &p3)

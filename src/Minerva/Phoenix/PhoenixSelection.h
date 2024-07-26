@@ -26,7 +26,7 @@ namespace Phoenix
         alignas(16) glm::vec3 instancesPos;
         int numberOfMeshlet = 0;
         int numberOfInstances = -1;
-        int width = 0;
+        int height = 0;
         float hfov = 0.0f;
         float errorThreshold = 0.0f;
     };
@@ -50,7 +50,7 @@ namespace Phoenix
         std::vector<ConstantData> constantData;
         std::vector<OutputData> outputData;
         std::vector<PhoenixMeshlet> meshletForSelection;
-        void PrepareComputeData(const std::vector<PhoenixMeshlet>&  totalMeshlets, float hFOV, int width);
+        void PrepareComputeData(const std::vector<PhoenixMeshlet>&  totalMeshlets, float hFOV, int height);
 
         LODSelectionDispatcher() = default;
         ~LODSelectionDispatcher() = default;
